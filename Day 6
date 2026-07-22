@@ -1,1 +1,107 @@
 
+# Day 6 – ATS-Optimized Resume with Claude AI
+
+**60-Day Claude AI Mastery Challenge**
+**Theme:** Phase 1 – Practical AI Applications
+**Focus:** Resume Optimization using Claude as ATS Expert, Resume Writer, Technical Recruiter & Hiring Manager
+
+---
+
+## What I Did Today
+
+Uploaded my existing 3-page resume to Claude and used it to act as a multi-role expert — simultaneously functioning as an ATS system, resume writer, technical recruiter, and hiring manager — to transform my resume into a recruiter-friendly, ATS-optimized one-page document.
+
+---
+
+## ATS Optimization Fundamentals Learned
+
+**What is an ATS (Applicant Tracking System)?**
+An ATS is software used by employers to scan, filter, and rank resumes before a human ever reads them. Studies show 75% of resumes are rejected by ATS before reaching a recruiter.
+
+**Key ATS Rules:**
+- No photos, images, tables, or text boxes — ATS cannot parse them
+- Use standard section headers: Summary, Experience, Education, Skills, Certifications
+- Single-column layout — ATS reads left to right, top to bottom
+- Standard fonts (Calibri, Arial, Times New Roman)
+- Keywords must match the job description exactly
+- Dates in consistent format: `Mon YYYY – Mon YYYY`
+- Quantify achievements — numbers rank higher than adjectives
+- File format: `.docx` or plain `.pdf` (not scanned PDF)
+
+---
+
+## Before vs. After Comparison
+
+| Element | Before (Original) | After (ATS-Optimized) |
+|---|---|---|
+| **Pages** | 3 pages | 1 page |
+| **Photo** | Included | Removed |
+| **Layout** | Multi-column sections | Single-column throughout |
+| **Section Headers** | "Key Highlights", "Memberships & Fellowships" | Standard: Summary, Experience, Certifications |
+| **Keywords** | Buried in body text | Front-loaded in Core Competencies block |
+| **Metrics** | Scattered, easy to miss | Prominent in every bullet |
+| **Certifications** | 2-column bullet list (ATS unfriendly) | Single-line keyword string |
+| **Profile Photo** | Present (can trigger bias filters) | Removed |
+| **Older roles** | Fully detailed (Hays, AON Hewitt, 2010–2015) | Condensed — space given to recent high-impact roles |
+
+---
+
+## Key Metrics Highlighted in Optimized Resume
+
+- Reduced audit observations by **47%** within 9 months
+- Reduced critical vendor risk by **33%**
+- Accelerated vendor onboarding by **12 days**
+- Cut legal review cycle from **4 weeks to 2 hours** (95% compliance accuracy)
+- Eliminated **22 TB** of redundant data — storage costs down **26%**
+- Governed **14 production AI/ML models** with formal risk classification
+
+---
+
+## Key Learning Objectives Completed
+
+- [x] Understand ATS optimization fundamentals
+- [x] Learn how recruiters evaluate resumes
+- [x] Improve resume structure and readability using AI
+- [x] Generate a professional one-page ATS-friendly resume
+- [x] Compare before vs. after versions
+
+---
+
+## Prompt Strategy Used
+
+Claude was prompted to act as four roles simultaneously:
+
+1. **ATS Expert** – Identify what an ATS scanner would reject or miss
+2. **Resume Writer** – Rewrite for impact, clarity, and keyword density
+3. **Technical Recruiter** – Prioritize what hiring managers look for first
+4. **Hiring Manager** – Evaluate executive presence and measurable results
+
+This multi-persona prompting technique produced a more well-rounded output than using a single role.
+
+---
+
+## Files in This Folder
+
+| File | Description |
+|---|---|
+| `README.md` | This file — Day 6 learning notes |
+| `Vivek_Kumar_ATS_Resume.docx` | ATS-optimized one-page resume (output) |
+| `Vivek Kumar_Resume.pdf` | Original 3-page resume (input) |
+
+---
+
+## Tools Used
+
+- **Claude (Anthropic)** – Primary AI for resume analysis and optimization
+- **Cowork Mode** – Claude desktop app for file creation and editing
+
+---
+
+## Reflection
+
+The biggest insight from Day 6: *a resume isn't written for humans first — it's written for machines first.* 
+Claude's ability to simultaneously apply ATS logic, recruiter psychology, and executive positioning in a single pass is a genuine productivity multiplier. A task that would take a professional resume writer 2–3 hours was completed in minutes, with full before/after transparency.
+
+---
+
+*Part of the [60-Day Claude AI Mastery Challenge](https://github.com/vkktask/60-day-claude-challeng)*
