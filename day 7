@@ -1,1 +1,132 @@
 
+# Day 7 — My Personalized Claude Usage Strategy
+
+## Overview
+
+Today I used Claude as a **Claude AI Expert, Productivity Consultant, and AI Workflow Architect** to generate a fully personalized Claude model and effort-level strategy based on my professional profile and daily tasks.
+
+---
+
+## My Profile
+
+| Field | Details |
+|---|---|
+| **Situation** | Professional |
+| **Primary Activities** | Learning, Research, Resume Building, Career Preparation, Business Planning |
+| **Usage Frequency** | Heavy User |
+| **Output Types Needed** | Coding Help, Deep Research, Business Strategy, Creative Work |
+
+---
+
+## My Recommended Primary Model
+
+> **Claude Sonnet 5 — My Daily Driver**
+
+As a heavy professional user spanning research, coding, strategy, and career prep, Sonnet 5 gives the best balance of intelligence, speed, and versatility. It handles 85–90% of tasks exceptionally well without the latency cost of Opus or the limitations of Haiku.
+
+---
+
+## Model Guide
+
+### 🔵 Haiku 4.5 — Fast & Lightweight
+Use for:
+- Quick grammar/spell checks on resume drafts
+- Simple Q&A and fast fact lookups
+- Reformatting or bullet-pointing content
+- Generating quick cover letter outlines
+- Fixing minor code bugs (<10 lines)
+- Daily task lists
+
+### 🟣 Sonnet 5 — Balanced & Versatile (Primary)
+Use for:
+- Writing and polishing full resumes & cover letters
+- Research summaries and literature reviews
+- Business plan drafts and market analysis
+- Interview prep and mock Q&A sessions
+- Coding projects, debugging, and explanations
+- Career strategy and job search planning
+- Learning new concepts deeply
+
+### 🔴 Opus 5 — Powerful & Strategic
+Use for:
+- Full business plan with competitive analysis
+- Complex multi-system architecture design
+- Deep industry research with synthesis
+- Critical resume for senior/executive roles
+- Solving hard algorithmic coding problems
+- Strategic career pivots requiring deep reasoning
+- When Sonnet gives unsatisfying output
+
+---
+
+## Effort Settings
+
+| Effort | When to Use |
+|---|---|
+| **Low** | Formatting, spell-check, simple rewrites, fast brainstorms |
+| **Standard** | 80% of daily work — research summaries, resume bullets, cover letters, coding help |
+| **High** | Business strategy docs, complex code architecture, key research synthesis |
+| **Max** | Final resume for dream job, full business plan, hard coding problem, major career decisions |
+
+---
+
+## My Personalized Claude Workflow Table
+
+| Task | Best Model | Best Effort | Reason |
+|---|---|---|---|
+| Quick resume bullet edits | Haiku | Low | Fast, low-stakes formatting task |
+| Full resume rewrite | Sonnet 5 | High | Needs good writing + career awareness |
+| Resume for top-tier role | Opus 5 | Max | High stakes, needs elite reasoning |
+| Cover letter draft | Sonnet 5 | Standard | Solid writing quality at good speed |
+| Interview Q&A practice | Sonnet 5 | Standard | Conversational; speed matters |
+| Research topic deep-dive | Sonnet 5 | High | Needs synthesis and nuance |
+| Cutting-edge research synthesis | Opus 5 | Max | Complex reasoning across sources |
+| Business plan outline | Sonnet 5 | High | Strategic; needs structured thinking |
+| Full business plan | Opus 5 | Max | Investor-ready doc needs best reasoning |
+| Competitive market analysis | Opus 5 | High | Deep strategic analysis required |
+| Simple bug fix / code snippet | Haiku | Low | Fast, localized, simple problem |
+| Code explanation & learning | Sonnet 5 | Standard | Needs clear teaching ability |
+| Complex system/app build | Sonnet 5 | High | Architecture needs careful thinking |
+| Hard algorithm / DSA problem | Opus 5 | Max | Needs elite math/logic reasoning |
+| Career pivot strategy | Opus 5 | High | Life decision; deserves deep thought |
+| Learning a new skill/concept | Sonnet 5 | Standard | Good pedagogy at fast speed |
+| Creative writing / blog draft | Sonnet 5 | Standard | Excellent writer at standard effort |
+| Quick fact / definition check | Haiku | Low | Fastest and sufficient |
+
+---
+
+## Biggest Mistakes to Avoid
+
+1. **Using Max Effort for Everything** — Max effort is slow. Reserve it for critical, high-stakes outputs only.
+2. **Using Haiku for Complex Strategy** — Haiku gives shallow answers to deep questions. Never use it for business plans or career decisions.
+3. **Vague Prompts** — "Help me with my resume" gives average results. Always add role, company type, tone, and goal.
+4. **Not Iterating** — The first output is a draft. Use Claude as a collaborator: "Make this more concise," "What am I missing?"
+5. **Asking Everything in One Prompt** — Break complex work into focused sessions: research → outline → draft → refine.
+6. **Not Giving Context** — Tell Claude who you are, what the document is for, and what audience will read it.
+
+---
+
+## Final Recommendation
+
+> **If I could only use ONE model and ONE effort level:**
+>
+> ### ✅ Claude Sonnet 5 + Standard Effort
+>
+> For a professional heavy user spanning research, resume building, career prep, coding, and business strategy — Sonnet 5 at Standard effort is the sweet spot. It handles 90% of tasks with high quality, is fast enough not to break workflow, and flexible enough to scale up to High effort or Opus for truly critical moments.
+>
+> Upgrade to **Opus 5 + Max** only when the output will be seen by an employer, investor, or client — or when a decision significantly impacts career or business.
+
+---
+
+## Key Learnings from Day 7
+
+- Claude has **three distinct models** (Haiku, Sonnet, Opus) serving different complexity and speed needs — choosing the right one is as important as the prompt itself.
+- **Effort level** is a separate dimension from model choice and dramatically affects output depth for complex tasks.
+- The **"right tool for the task"** mindset applies to AI just like it does to any professional tool.
+- **Prompt quality** matters more than model choice for most everyday tasks — a great prompt on Sonnet beats a vague prompt on Opus.
+- Heavy users should think in **workflows**, not single prompts: research → synthesize → draft → refine → finalize.
+- Saving a personal Claude strategy (like this one) and referring to it regularly prevents the #1 mistake: using the same model/effort for everything.
+
+---
+
+*Generated using Claude (Sonnet 5) in Cowork mode · Day 7 · July 2026*
