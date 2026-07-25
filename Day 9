@@ -1,1 +1,120 @@
 file:///C:/Users/RitvikT/AppData/Local/Packages/Claude_pzs8sxrjxfjjc/LocalCache/Roaming/Claude/local-agent-mode-sessions/98eca2e4-08bc-4e28-a263-7b87719df5a7/3e2b4956-9389-4b35-bfdf-b195fe378a21/local_89d98728-c22d-44fa-9bd8-ecb1c3de4e56/outputs/nutri-scope-mvp.htmlfile:///C:/Users/RitvikT/AppData/Local/Packages/Claude_pzs8sxrjxfjjc/LocalCache/Roaming/Claude/local-agent-mode-sessions/98eca2e4-08bc-4e28-a263-7b87719df5a7/3e2b4956-9389-4b35-bfdf-b195fe378a21/local_89d98728-c22d-44fa-9bd8-ecb1c3de4e56/outputs/nutri-scope-mvp.htmlfile:///C:/Users/RitvikT/AppData/Local/Packages/CLAUDE~1/LOCALC~1/Roaming/Claude/LOCAL-~1/98ECA2~1/3E2B49~1/LOD12A~1/outputs/NUTRI-~2.HTM
+# Day 9 — NutriScope: AI-Powered Nutrition Tracker
+
+## 🥗 What I Built
+
+**NutriScope** — a complete, single-file HTML nutrition tracking application built entirely with Claude in Cowork mode. No backend, no framework, no install. Just open in a browser and track.
+
+Built in two iterations:
+- **MVP (v1.0)** — Core nutrition tracker with 20 foods and 10 nutrients
+- **Enhanced (v2.0)** — Full-featured app with 60 foods, 16 nutrients, meal planner, risk analysis, and more
+
+---
+
+## 📁 Files
+
+| File | Description |
+|------|-------------|
+| `nutri-scope-mvp.html` | MVP version — core tracking features |
+| `nutri-scope-enhanced.html` | Enhanced version — full feature set |
+
+---
+
+## 🚀 Features
+
+### MVP (v1.0)
+- **Profile inputs** — Age, gender, height, weight, activity level, dietary preference
+- **Food database** — 20 common Indian foods (Rice, Roti, Dal, Paneer, Egg, Chicken, Fish, etc.)
+- **10 nutrients tracked** — Calories, Protein, Carbs, Fat, Fiber, Iron, Calcium, Vit C, Vit D, Vit B12
+- **Food log** — Add, edit quantity, remove entries
+- **Dashboard** — Energy progress, macro doughnut chart, micronutrient radar, deficiency/excess lists
+- **Recommendations** — Personalised food adds, swaps, portion adjustments by diet type
+- **Dark premium UI** — Chart.js, mobile responsive, no backend
+
+### Enhanced (v2.0)
+- **60-food database** — Added nuts, seeds, vegetables, fruits, spices, oils, seafood
+- **16 nutrients** — Added Sodium, Potassium, Magnesium, Zinc, Omega-3, Folate
+- **CSV Upload** — Import food log from spreadsheet
+- **Quick food search** — Type-to-search across all 60 foods
+- **4 dietary modes** — Vegetarian, Eggetarian, Non-Vegetarian, Vegan (auto-filters foods)
+- **Health goal setting** — Maintain / Lose (−500 kcal) / Gain (+300 kcal)
+- **Health conditions** — Diabetes, Hypertension, Anaemia, Osteoporosis-specific flags
+- **2-Day Meal Planner** — Manual + Auto-Fill + CSV Export
+- **Risk Analysis tab** — 7 risk categories with HIGH / MEDIUM / LOW severity
+- **4 charts** — Doughnut, Radar, Bar (Day 1 vs Day 2 trend), Meal calorie breakdown
+- **Micronutrient deep dive** — Absorption tips per nutrient (Vit C + Iron pairing, etc.)
+- **Sources & Methodology** — IFCT 2017, ICMR 2020, USDA, Mifflin-St Jeor citations
+- **Educational disclaimer** — Not medical advice, clearly stated
+
+---
+
+## 📊 MVP vs Enhanced Comparison
+
+| Feature | MVP | Enhanced |
+|---------|-----|----------|
+| Foods | 20 | 60 |
+| Nutrients | 10 | 16 |
+| Tabs | 4 | 7 |
+| Dietary options | 3 | 4 (+ Vegan) |
+| Goal setting | ❌ | ✅ |
+| Health conditions | ❌ | ✅ |
+| CSV Upload | ❌ | ✅ |
+| Quick search | ❌ | ✅ |
+| Meal Planner | ❌ | ✅ 2-day + auto-fill |
+| Risk Analysis | ❌ | ✅ |
+| Charts | 2 | 4 |
+| Data sources cited | ❌ | ✅ |
+| Disclaimer | ❌ | ✅ |
+
+---
+
+## 🧠 What I Learned
+
+1. **Prompt engineering for complex apps** — Breaking the build into MVP → Enhanced forces clearer thinking about core vs nice-to-have features
+2. **Single-file HTML is powerful** — A full SaaS-quality app with zero dependencies (except Chart.js CDN) fits in one file
+3. **Nutrition data complexity** — Indian food databases (IFCT 2017) differ significantly from USDA; using the right source matters
+4. **Iterative AI development** — Prompt 1 gave a working foundation; Prompt 2 layered on top cleanly without breaking anything
+5. **Chart.js with dark themes** — Requires explicit color overrides for axes, labels, and grids; defaults are for light mode
+
+---
+
+## 🛠️ Tech Stack
+
+- **HTML / CSS / JavaScript** — Single file, zero build step
+- **Chart.js 4.4.1** — Doughnut, Radar, Bar charts (CDN)
+- **localStorage** — Profile persistence across sessions
+- **FileReader API** — CSV parsing in-browser
+- **Mifflin-St Jeor equation** — BMR/TDEE calculation
+- **IFCT 2017 + ICMR 2020** — Nutrient data & dietary reference values
+
+---
+
+## 📸 Screenshots
+
+_(Add screenshots of MVP and Enhanced here)_
+
+---
+
+## 🔗 Live Demo
+
+Open either HTML file directly in any browser — no server needed.
+
+---
+
+## 📚 Data Sources
+
+- IFCT 2017 — National Institute of Nutrition, Hyderabad
+- USDA FoodData Central
+- ICMR Dietary Reference Values 2020
+- WHO/FAO Nutrient Reference Values
+- NIN Dietary Guidelines for Indians 2024
+
+> ⚠️ **Disclaimer:** NutriScope is an educational tool only. It is not a substitute for professional medical or nutritional advice. Always consult a registered dietitian for personalised guidance.
+
+---
+
+## 🏷️ Day 9 of 60 Days of AI Challenge
+
+**Challenge:** Build MVP → Enhance → Compare → Document  
+**Time taken:** ~1 session with Claude (Cowork mode)  
+**Prompts used:** 2 (MVP prompt + Enhancement prompt)
