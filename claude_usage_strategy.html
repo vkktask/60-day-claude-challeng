@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Claude Usage Strategy</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3250;
+    --accent: #7c6aff;
+    --accent2: #4fc3f7;
+    --accent3: #f06292;
+    --accent4: #66bb6a;
+    --accent5: #ffa726;
+    --text: #e8eaf6;
+    --muted: #8892b0;
+    --haiku: #4fc3f7;
+    --sonnet: #7c6aff;
+    --opus: #f06292;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    line-height: 1.6;
+    padding: 24px 16px;
+  }
+  .container { max-width: 900px; margin: 0 auto; }
+
+  /* HEADER */
+  .hero {
+    background: linear-gradient(135deg, #1a1d27 0%, #22263a 100%);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 40px 36px;
+    text-align: center;
+    margin-bottom: 28px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -60px; left: -60px;
+    width: 220px; height: 220px;
+    background: radial-gradient(circle, rgba(124,106,255,0.18) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+  .hero::after {
+    content: '';
+    position: absolute;
+    bottom: -60px; right: -60px;
+    width: 220px; height: 220px;
+    background: radial-gradient(circle, rgba(79,195,247,0.14) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+  .hero-tag {
+    display: inline-block;
+    background: rgba(124,106,255,0.15);
+    border: 1px solid rgba(124,106,255,0.4);
+    color: var(--accent);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 4px 14px;
+    border-radius: 20px;
+    margin-bottom: 14px;
+  }
+  .hero h1 {
+    font-size: 32px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #e8eaf6, #7c6aff, #4fc3f7);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 10px;
+  }
+  .hero p { color: var(--muted); font-size: 15px; }
+  .profile-pills {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    justify-content: center; margin-top: 18px;
+  }
+  .pill {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 13px;
+    color: var(--text);
+  }
+
+  /* SECTION TITLES */
+  .section-title {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+    margin-bottom: 14px;
+    margin-top: 32px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* PRIMARY MODEL CARD */
+  .primary-card {
+    background: linear-gradient(135deg, rgba(124,106,255,0.12), rgba(79,195,247,0.08));
+    border: 1px solid rgba(124,106,255,0.35);
+    border-radius: 16px;
+    padding: 28px 28px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+  .primary-badge {
+    background: linear-gradient(135deg, var(--accent), #4fc3f7);
+    border-radius: 14px;
+    padding: 16px 20px;
+    text-align: center;
+    min-width: 110px;
+    flex-shrink: 0;
+  }
+  .primary-badge .model-name {
+    font-size: 20px;
+    font-weight: 800;
+    color: #fff;
+    display: block;
+  }
+  .primary-badge .model-label {
+    font-size: 11px;
+    color: rgba(255,255,255,0.8);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .primary-info h3 {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .primary-info p { color: var(--muted); font-size: 14px; }
+
+  /* MODEL CARDS GRID */
+  .model-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 14px;
+  }
+  .model-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    transition: transform 0.2s;
+  }
+  .model-card:hover { transform: translateY(-2px); }
+  .model-header {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
+  }
+  .model-dot {
+    width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+  }
+  .dot-haiku { background: var(--haiku); }
+  .dot-sonnet { background: var(--sonnet); }
+  .dot-opus { background: var(--opus); }
+  .model-name-tag {
+    font-size: 16px; font-weight: 700;
+  }
+  .name-haiku { color: var(--haiku); }
+  .name-sonnet { color: var(--sonnet); }
+  .name-opus { color: var(--opus); }
+  .model-subtitle { color: var(--muted); font-size: 12px; }
+  .use-list { list-style: none; }
+  .use-list li {
+    color: var(--muted);
+    font-size: 13px;
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    display: flex; align-items: flex-start; gap: 8px;
+  }
+  .use-list li::before { content: '→'; color: var(--accent); flex-shrink: 0; }
+
+  /* EFFORT CARDS */
+  .effort-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 12px;
+  }
+  .effort-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px;
+  }
+  .effort-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    padding: 3px 10px;
+    border-radius: 10px;
+    display: inline-block;
+    margin-bottom: 10px;
+  }
+  .e-low    { background: rgba(102,187,106,0.15); color: #66bb6a; border: 1px solid rgba(102,187,106,0.3); }
+  .e-std    { background: rgba(79,195,247,0.15);  color: #4fc3f7; border: 1px solid rgba(79,195,247,0.3); }
+  .e-high   { background: rgba(255,167,38,0.15);  color: #ffa726; border: 1px solid rgba(255,167,38,0.3); }
+  .e-max    { background: rgba(240,98,146,0.15);  color: #f06292; border: 1px solid rgba(240,98,146,0.3); }
+  .effort-card h4 { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+  .effort-card p  { font-size: 13px; color: var(--muted); }
+
+  /* TABLE */
+  .table-wrap { overflow-x: auto; border-radius: 14px; border: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead { background: var(--surface2); }
+  th { padding: 12px 14px; text-align: left; color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.8px; white-space: nowrap; }
+  td { padding: 11px 14px; border-top: 1px solid var(--border); color: var(--text); vertical-align: top; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+  .badge {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .b-haiku  { background: rgba(79,195,247,0.15);  color: #4fc3f7; }
+  .b-sonnet { background: rgba(124,106,255,0.15); color: #7c6aff; }
+  .b-opus   { background: rgba(240,98,146,0.15);  color: #f06292; }
+  .b-low    { background: rgba(102,187,106,0.12); color: #66bb6a; }
+  .b-std    { background: rgba(79,195,247,0.12);  color: #4fc3f7; }
+  .b-high   { background: rgba(255,167,38,0.12);  color: #ffa726; }
+  .b-max    { background: rgba(240,98,146,0.12);  color: #f06292; }
+
+  /* MISTAKES */
+  .mistake-grid { display: grid; gap: 10px; }
+  .mistake-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent3);
+    border-radius: 10px;
+    padding: 14px 16px;
+    display: flex; gap: 12px; align-items: flex-start;
+  }
+  .mistake-icon { font-size: 18px; flex-shrink: 0; }
+  .mistake-item h4 { font-size: 14px; font-weight: 600; margin-bottom: 3px; }
+  .mistake-item p  { font-size: 13px; color: var(--muted); }
+
+  /* FINAL RECOMMENDATION */
+  .final-card {
+    background: linear-gradient(135deg, rgba(124,106,255,0.1), rgba(240,98,146,0.08));
+    border: 1px solid rgba(124,106,255,0.3);
+    border-radius: 16px;
+    padding: 28px;
+    text-align: center;
+    margin-top: 8px;
+  }
+  .final-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 12px; }
+  .final-answer {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(124,106,255,0.15);
+    border: 1px solid rgba(124,106,255,0.4);
+    border-radius: 12px;
+    padding: 12px 24px;
+    font-size: 18px;
+    font-weight: 700;
+    color: #c5b8ff;
+    margin-bottom: 14px;
+  }
+  .final-card p { color: var(--muted); font-size: 14px; max-width: 560px; margin: 0 auto; line-height: 1.7; }
+
+  /* FOOTER */
+  .footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 36px; padding-top: 16px; border-top: 1px solid var(--border); }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-tag">Personalized AI Strategy</div>
+    <h1>My Claude Usage Strategy</h1>
+    <p>Optimized for your professional profile &amp; workflow</p>
+    <div class="profile-pills">
+      <span class="pill">💼 Professional</span>
+      <span class="pill">📚 Learning &amp; Research</span>
+      <span class="pill">📄 Resume Building</span>
+      <span class="pill">🚀 Career Prep</span>
+      <span class="pill">📊 Business Planning</span>
+      <span class="pill">⚡ Heavy User</span>
+      <span class="pill">💻 Coding Help</span>
+      <span class="pill">🧠 Deep Research</span>
+      <span class="pill">🎯 Business Strategy</span>
+      <span class="pill">✍️ Creative Work</span>
+    </div>
+  </div>
+
+  <!-- PRIMARY MODEL -->
+  <div class="section-title">Recommended Primary Model</div>
+  <div class="primary-card">
+    <div class="primary-badge">
+      <span class="model-name">Sonnet 5</span>
+      <span class="model-label">claude-sonnet-5</span>
+    </div>
+    <div class="primary-info">
+      <h3>Claude Sonnet 5 — Your Daily Driver</h3>
+      <p>As a heavy professional user spanning research, coding, strategy, and career prep, Sonnet 5 gives you the best balance of intelligence, speed, and versatility. It handles 85–90% of your tasks exceptionally well without the latency cost of Opus or the limitations of Haiku. It's fast enough for real-time workflows yet powerful enough for complex business and technical tasks.</p>
+    </div>
+  </div>
+
+  <!-- MODEL GUIDE -->
+  <div class="section-title">Model Guide — When to Use Each</div>
+  <div class="model-grid">
+
+    <div class="model-card">
+      <div class="model-header">
+        <div class="model-dot dot-haiku"></div>
+        <div>
+          <div class="model-name-tag name-haiku">Haiku 4.5</div>
+          <div class="model-subtitle">Fast · Lightweight · Cheap</div>
+        </div>
+      </div>
+      <ul class="use-list">
+        <li>Quick grammar/spell checks on resume drafts</li>
+        <li>Simple Q&amp;A and fact lookups</li>
+        <li>Reformatting or bullet-pointing content you wrote</li>
+        <li>Generating quick cover letter outlines</li>
+        <li>Brainstorm starters (5 ideas fast)</li>
+        <li>Fixing minor code bugs (&lt;10 lines)</li>
+        <li>Daily task lists and scheduling help</li>
+      </ul>
+    </div>
+
+    <div class="model-card">
+      <div class="model-header">
+        <div class="model-dot dot-sonnet"></div>
+        <div>
+          <div class="model-name-tag name-sonnet">Sonnet 5</div>
+          <div class="model-subtitle">Balanced · Smart · Versatile</div>
+        </div>
+      </div>
+      <ul class="use-list">
+        <li>Writing and polishing full resumes &amp; cover letters</li>
+        <li>Research summaries and literature reviews</li>
+        <li>Business plan drafts and market analysis</li>
+        <li>Interview prep and mock Q&amp;A sessions</li>
+        <li>Coding projects, debugging, and explanations</li>
+        <li>Career strategy and job search planning</li>
+        <li>Learning new concepts deeply</li>
+      </ul>
+    </div>
+
+    <div class="model-card">
+      <div class="model-header">
+        <div class="model-dot dot-opus"></div>
+        <div>
+          <div class="model-name-tag name-opus">Opus 5</div>
+          <div class="model-subtitle">Powerful · Deep · Strategic</div>
+        </div>
+      </div>
+      <ul class="use-list">
+        <li>Full business plan with competitive analysis</li>
+        <li>Complex multi-system architecture design</li>
+        <li>Deep industry research with synthesis</li>
+        <li>Critical resume for senior/executive roles</li>
+        <li>Solving hard algorithmic coding problems</li>
+        <li>Strategic career pivots requiring deep reasoning</li>
+        <li>When Sonnet gives unsatisfying output</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- EFFORT LEVELS -->
+  <div class="section-title">Effort Settings — When to Use Each</div>
+  <div class="effort-grid">
+    <div class="effort-card">
+      <span class="effort-label e-low">Low</span>
+      <h4>Quick &amp; Simple</h4>
+      <p>Formatting, spell-check, simple rewrites, fast brainstorms. Output quality difference is minimal for these tasks.</p>
+    </div>
+    <div class="effort-card">
+      <span class="effort-label e-std">Standard</span>
+      <h4>Your Default</h4>
+      <p>80% of your daily work. Research summaries, resume bullets, cover letters, coding help, interview prep.</p>
+    </div>
+    <div class="effort-card">
+      <span class="effort-label e-high">High</span>
+      <h4>Important Work</h4>
+      <p>Business strategy documents, complex code architecture, career pivot decisions, key research synthesis.</p>
+    </div>
+    <div class="effort-card">
+      <span class="effort-label e-max">Max</span>
+      <h4>Critical Output</h4>
+      <p>Final resume for dream job, full business plan, solving a hard coding problem, strategic decisions with major consequences.</p>
+    </div>
+  </div>
+
+  <!-- WORKFLOW TABLE -->
+  <div class="section-title">My Personalized Claude Workflow</div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Task</th>
+          <th>Best Model</th>
+          <th>Effort</th>
+          <th>Reason</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Quick resume bullet edits</td>
+          <td><span class="badge b-haiku">Haiku</span></td>
+          <td><span class="badge b-low">Low</span></td>
+          <td>Fast, low-stakes formatting task</td>
+        </tr>
+        <tr>
+          <td>Full resume rewrite</td>
+          <td><span class="badge b-sonnet">Sonnet 5</span></td>
+          <td><span class="badge b-high">High</span></td>
+          <td>Needs good writing + career awareness</td>
+        </tr>
+        <tr>
+          <td>Resume for top-tier role</td>
+          <td><span class="badge b-opus">Opus 5</span></td>
+          <td><span class="badge b-max">Max</span></td>
+          <td>High stakes, needs elite reasoning</td>
+        </tr>
+        <tr>
+          <td>Cover letter draft</td>
+          <td><span class="badge b-sonnet">Sonnet 5</span></td>
+          <td><span class="badge b-std">Standard</span></td>
+          <td>Solid writing quality at good speed</td>
+        </tr>
+        <tr>
+          <td>Interview Q&amp;A practice</td>
+          <td><span class="badge b-sonnet">Sonnet 5</span></td>
+          <td><span class="badge b-std">Standard</span></td>
+          <td>Conversational; speed matters</td>
+        </tr>
+        <tr>
+          <td>Research topic deep-dive</td>
+          <td><span class="badge b-sonnet">Sonnet 5</span></td>
+          <td><span class="badge b-high">High</span></td>
+          <td>Needs synthesis and nuance</td>
+        </tr>
+        <tr>
+          <td>Cutting-edge research synthesis</td>
+          <td><span class="badge b-opus">Opus 5</span></td>
+          <td><span class="badge b-max">Max</span></td>
+          <td>Complex reasoning across sources</td>
+        </tr>
+        <tr>
+          <td>Business plan outline</td>
+          <td><span class="badge b-sonnet">Sonnet 5</span></td>
+          <td><span class="badge b-high">High</span></td>
+          <td>Strategic; needs structured thinking</td>
+        </tr>
+        <tr>
+          <td>Full business plan</td>
+          <td><span class="badge b-opus">Opus 5</span></td>
+          <td><span class="badge b-max">Max</span></td>
+          <td>Investor-ready doc needs best reasoning</td>
+        </tr>
+        <tr>
+          <td>Competitive market analysis</td>
+          <td><span class="badge b-opus">Opus 5</span></td>
+          <td><span class="badge b-high">High</span></td>
+          <td>Deep strategic analysis required</td>
+        </tr>
+        <tr>
+          <td>Simple bug fix / code snippet</td>
+          <td><span class="badge b-haiku">Haiku</span></td>
+          <td><span class="badge b-low">Low</span></td>
+          <td>Fast, localized, simple problem</td>
+        </tr>
+        <tr>
+          <td>Code explanation &amp; learning</td>
+          <td><span class="badge b-sonnet">Sonnet 5</span></td>
+          <td><span class="badge b-std">Standard</span></td>
+          <td>Needs clear teaching ability</td>
+        </tr>
+        <tr>
+          <td>Complex system/app build</td>
+          <td><span class="badge b-sonnet">Sonnet 5</span></td>
+          <td><span class="badge b-high">High</span></td>
+          <td>Architecture needs careful thinking</td>
+        </tr>
+        <tr>
+          <td>Hard algorithm / DSA problem</td>
+          <td><span class="badge b-opus">Opus 5</span></td>
+          <td><span class="badge b-max">Max</span></td>
+          <td>Needs elite math/logic reasoning</td>
+        </tr>
+        <tr>
+          <td>Career pivot strategy</td>
+          <td><span class="badge b-opus">Opus 5</span></td>
+          <td><span class="badge b-high">High</span></td>
+          <td>Life decision; deserves deep thought</td>
+        </tr>
+        <tr>
+          <td>Learning a new skill/concept</td>
+          <td><span class="badge b-sonnet">Sonnet 5</span></td>
+          <td><span class="badge b-std">Standard</span></td>
+          <td>Good pedagogy at fast speed</td>
+        </tr>
+        <tr>
+          <td>Creative writing / blog draft</td>
+          <td><span class="badge b-sonnet">Sonnet 5</span></td>
+          <td><span class="badge b-std">Standard</span></td>
+          <td>Excellent writer at standard effort</td>
+        </tr>
+        <tr>
+          <td>Quick fact / definition check</td>
+          <td><span class="badge b-haiku">Haiku</span></td>
+          <td><span class="badge b-low">Low</span></td>
+          <td>Fastest and sufficient</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- MISTAKES -->
+  <div class="section-title">Biggest Mistakes to Avoid</div>
+  <div class="mistake-grid">
+    <div class="mistake-item">
+      <div class="mistake-icon">⚡</div>
+      <div>
+        <h4>Using Max Effort for Everything</h4>
+        <p>Max effort is slow and costs more. Using it for bullet edits or quick questions wastes your time. Reserve it for critical, high-stakes outputs only.</p>
+      </div>
+    </div>
+    <div class="mistake-item">
+      <div class="mistake-icon">🤏</div>
+      <div>
+        <h4>Using Haiku for Complex Strategy</h4>
+        <p>Haiku will give shallow answers to deep questions. Never use it for business plans, career decisions, or complex research — you'll get mediocre output.</p>
+      </div>
+    </div>
+    <div class="mistake-item">
+      <div class="mistake-icon">📋</div>
+      <div>
+        <h4>Vague Prompts</h4>
+        <p>"Help me with my resume" gives average results. "Rewrite my resume for a Senior Product Manager role at a Series B SaaS startup, emphasizing metrics" gets exceptional results.</p>
+      </div>
+    </div>
+    <div class="mistake-item">
+      <div class="mistake-icon">🔁</div>
+      <div>
+        <h4>Not Iterating</h4>
+        <p>Don't accept the first output. Use Claude as a collaborator: "Make this more concise," "Add a stronger hook," "What am I missing?" Iteration is where the magic happens.</p>
+      </div>
+    </div>
+    <div class="mistake-item">
+      <div class="mistake-icon">🧩</div>
+      <div>
+        <h4>Asking Everything in One Prompt</h4>
+        <p>Don't dump 5 tasks into one message. Break complex work into focused sessions: research → outline → draft → refine. Each step gets better output.</p>
+      </div>
+    </div>
+    <div class="mistake-item">
+      <div class="mistake-icon">📎</div>
+      <div>
+        <h4>Not Giving Context</h4>
+        <p>Tell Claude who you are, what the document is for, and what tone you want. "I'm a software engineer pivoting to product management, targeting mid-size tech companies" changes everything.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- FINAL RECOMMENDATION -->
+  <div class="section-title">Final Recommendation</div>
+  <div class="final-card">
+    <h3>If You Could Only Pick ONE Model + ONE Effort</h3>
+    <div class="final-answer">
+      🎯 Claude Sonnet 5 &nbsp;+&nbsp; Standard Effort
+    </div>
+    <p>
+      For a professional heavy user like you — spanning research, resume building, career prep, coding, and business strategy — <strong style="color:#c5b8ff">Sonnet 5 at Standard effort</strong> is the sweet spot. It's smart enough to handle 90% of your tasks with high quality, fast enough not to break your flow, and flexible enough to switch to High effort for important work or Opus for truly critical moments. You'll be productive from day one without overthinking model selection.
+    </p>
+    <p style="margin-top: 12px; font-size: 13px;">
+      Upgrade to <strong style="color:#f06292">Opus 5 + Max</strong> only when the output will be seen by an employer, investor, or client — or when a decision significantly impacts your career or business.
+    </p>
+  </div>
+
+  <div class="footer">
+    Generated by Claude · Personalized for Vivek · July 2026
+  </div>
+
+</div>
+</body>
+</html>
