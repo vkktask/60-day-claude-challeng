@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Face Puzzle Game</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0e1a;
+  --surface:#111827;
+  --surface2:#1f2937;
+  --border:#2d3748;
+  --accent:#6366f1;
+  --accent2:#8b5cf6;
+  --green:#10b981;
+  --red:#ef4444;
+  --gold:#f59e0b;
+  --text:#f1f5f9;
+  --muted:#94a3b8;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;align-items:center;overflow-x:hidden}
+
+/* Header */
+.header{width:100%;padding:16px 24px;background:linear-gradient(135deg,#1e1b4b,#0f172a);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100}
+.header-icon{font-size:28px}
+.header h1{font-size:20px;font-weight:700;background:linear-gradient(135deg,#818cf8,#c084fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.header-sub{font-size:12px;color:var(--muted);margin-left:auto}
+
+/* Screen management */
+.screen{width:100%;max-width:900px;padding:24px;display:none}
+.screen.active{display:block}
+
+/* Camera screen */
+.camera-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:24px;text-align:center}
+.camera-card h2{font-size:22px;margin-bottom:8px}
+.camera-card p{color:var(--muted);margin-bottom:20px;font-size:14px}
+.video-wrap{position:relative;display:inline-block;border-radius:16px;overflow:hidden;border:2px solid var(--border);background:#000;max-width:480px;width:100%}
+video{width:100%;display:block;transform:scaleX(-1)}
+canvas#snapshot{display:none}
+.camera-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.7);flex-direction:column;gap:12px}
+.face-guide{width:200px;height:260px;border:3px dashed rgba(99,102,241,.6);border-radius:50%;animation:pulse-guide 2s ease-in-out infinite}
+@keyframes pulse-guide{0%,100%{border-color:rgba(99,102,241,.6)}50%{border-color:rgba(99,102,241,1)}}
+.guide-text{color:rgba(255,255,255,.7);font-size:13px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border:none;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;letter-spacing:.3px}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(99,102,241,.4)}
+.btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+.btn-secondary:hover{background:var(--border)}
+.btn-success{background:linear-gradient(135deg,#059669,var(--green));color:#fff}
+.btn-success:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(16,185,129,.4)}
+.btn-danger{background:linear-gradient(135deg,#dc2626,var(--red));color:#fff}
+.camera-actions{margin-top:20px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.permission-error{background:#1a0f0f;border:1px solid #7f1d1d;border-radius:12px;padding:20px;margin-top:16px;color:#fca5a5;font-size:14px}
+
+/* Difficulty screen */
+.difficulty-wrap{max-width:600px;margin:0 auto}
+.preview-img{border-radius:16px;border:2px solid var(--border);max-width:100%;display:block;margin:0 auto 24px}
+.diff-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
+.diff-card{background:var(--surface);border:2px solid var(--border);border-radius:16px;padding:20px;text-align:center;cursor:pointer;transition:all .2s}
+.diff-card:hover,.diff-card.selected{border-color:var(--accent);background:rgba(99,102,241,.1)}
+.diff-icon{font-size:32px;margin-bottom:8px}
+.diff-name{font-weight:700;font-size:16px}
+.diff-pieces{font-size:12px;color:var(--muted);margin-top:4px}
+.diff-time{font-size:11px;color:var(--accent);margin-top:4px}
+
+/* Game screen */
+.game-layout{display:grid;grid-template-columns:1fr auto;gap:20px;align-items:start}
+@media(max-width:680px){.game-layout{grid-template-columns:1fr}}
+.game-sidebar{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;min-width:200px}
+.stat-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:14px}
+.stat-row:last-child{border-bottom:none}
+.stat-label{color:var(--muted)}
+.stat-value{font-weight:700;font-size:16px;color:var(--accent)}
+.stat-value.green{color:var(--green)}
+.progress-bar{height:6px;background:var(--border);border-radius:999px;margin-top:16px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--green));border-radius:999px;transition:width .3s}
+.progress-label{font-size:12px;color:var(--muted);margin-top:6px;text-align:right}
+.sidebar-actions{margin-top:20px;display:flex;flex-direction:column;gap:10px}
+
+/* Puzzle board */
+.board-wrap{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;display:flex;align-items:center;justify-content:center}
+.puzzle-board{display:grid;gap:3px;user-select:none;position:relative}
+.puzzle-cell{position:relative;border-radius:6px;overflow:hidden;cursor:grab;transition:transform .1s,box-shadow .1s}
+.puzzle-cell:active{cursor:grabbing}
+.puzzle-cell canvas{display:block;width:100%;height:100%;border-radius:6px}
+.puzzle-cell.dragging{opacity:.85;transform:scale(1.05);box-shadow:0 12px 30px rgba(99,102,241,.5);z-index:999;cursor:grabbing;border:2px solid var(--accent)}
+.puzzle-cell.correct{box-shadow:0 0 0 3px var(--green)}
+.puzzle-cell.drag-over{box-shadow:0 0 0 3px var(--accent2);transform:scale(1.02)}
+.puzzle-cell .piece-num{position:absolute;bottom:2px;right:4px;font-size:9px;color:rgba(255,255,255,.4);font-weight:600;pointer-events:none}
+
+/* Win overlay */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;z-index:1000;backdrop-filter:blur(8px)}
+.overlay.hidden{display:none}
+.result-card{background:var(--surface);border:1px solid var(--border);border-radius:24px;padding:32px;max-width:480px;width:90%;text-align:center}
+.result-trophy{font-size:64px;margin-bottom:16px;animation:bounce .5s ease}
+@keyframes bounce{0%{transform:scale(0)}60%{transform:scale(1.15)}100%{transform:scale(1)}}
+.result-title{font-size:28px;font-weight:800;background:linear-gradient(135deg,#fbbf24,#f59e0b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:6px}
+.result-sub{color:var(--muted);font-size:14px;margin-bottom:24px}
+.result-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
+.result-stat{background:var(--surface2);border-radius:12px;padding:14px}
+.result-stat .val{font-size:22px;font-weight:800;color:var(--accent)}
+.result-stat .lbl{font-size:11px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:.5px}
+.result-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+
+/* Leaderboard */
+.leaderboard{margin-top:24px;text-align:left}
+.lb-title{font-size:14px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.lb-row{display:grid;grid-template-columns:28px 1fr auto auto;gap:8px;align-items:center;padding:8px 12px;border-radius:10px;font-size:13px;margin-bottom:4px;background:var(--surface2)}
+.lb-row:first-child{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3)}
+.lb-row:nth-child(2){background:rgba(148,163,184,.08);border:1px solid rgba(148,163,184,.2)}
+.lb-row:nth-child(3){background:rgba(180,83,9,.08);border:1px solid rgba(180,83,9,.2)}
+.lb-rank{font-weight:800;text-align:center}
+.lb-info{color:var(--muted);font-size:11px}
+.lb-time{font-weight:700;color:var(--accent)}
+.lb-moves{color:var(--muted);font-size:11px}
+.rank-1{color:var(--gold)}
+.rank-2{color:#94a3b8}
+.rank-3{color:#b45309}
+
+/* Confetti canvas */
+#confetti-canvas{position:fixed;inset:0;pointer-events:none;z-index:999}
+
+/* Responsive */
+@media(max-width:480px){
+  .diff-grid{grid-template-columns:1fr}
+  .result-stats{grid-template-columns:1fr}
+  .game-sidebar{order:-1}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <span class="header-icon">🧩</span>
+  <h1>AI Face Puzzle</h1>
+  <span class="header-sub">60 Days of AI · Day 20</span>
+</div>
+
+<!-- SCREEN 1: Camera -->
+<div class="screen active" id="screen-camera">
+  <div class="camera-card">
+    <h2>📸 Capture Your Face</h2>
+    <p>Position your face in the oval guide, then take a photo to create your puzzle</p>
+    <div class="video-wrap" id="video-wrap">
+      <video id="video" autoplay playsinline muted></video>
+      <div class="camera-overlay" id="cam-overlay">
+        <div class="face-guide"></div>
+        <span class="guide-text">Center your face here</span>
+      </div>
+    </div>
+    <div id="perm-error" class="permission-error" style="display:none">
+      ⚠️ Camera access denied. Please allow camera permissions in your browser settings and reload the page.
+    </div>
+    <div class="camera-actions">
+      <button class="btn btn-primary" id="btn-snap" onclick="takePhoto()" style="display:none">📷 Take Photo</button>
+    </div>
+    <canvas id="snapshot" style="display:none"></canvas>
+  </div>
+</div>
+
+<!-- SCREEN 2: Difficulty -->
+<div class="screen" id="screen-difficulty">
+  <div class="difficulty-wrap">
+    <div style="text-align:center;margin-bottom:24px">
+      <h2 style="font-size:24px;margin-bottom:8px">🎮 Choose Difficulty</h2>
+      <p style="color:var(--muted);font-size:14px">Pick a grid size — bigger grid = harder puzzle</p>
+    </div>
+    <canvas id="preview-canvas" class="preview-img" style="max-width:300px;border-radius:16px"></canvas>
+    <div class="diff-grid">
+      <div class="diff-card" onclick="selectDiff(3,this)">
+        <div class="diff-icon">🟢</div>
+        <div class="diff-name">Easy</div>
+        <div class="diff-pieces">3×3 · 9 pieces</div>
+        <div class="diff-time">~1 min</div>
+      </div>
+      <div class="diff-card" onclick="selectDiff(4,this)">
+        <div class="diff-icon">🟡</div>
+        <div class="diff-name">Medium</div>
+        <div class="diff-pieces">4×4 · 16 pieces</div>
+        <div class="diff-time">~3 min</div>
+      </div>
+      <div class="diff-card" onclick="selectDiff(5,this)">
+        <div class="diff-icon">🔴</div>
+        <div class="diff-name">Hard</div>
+        <div class="diff-pieces">5×5 · 25 pieces</div>
+        <div class="diff-time">~6 min</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+      <button class="btn btn-secondary" onclick="showScreen('screen-camera');startCamera()">🔄 Retake Photo</button>
+      <button class="btn btn-primary" id="btn-start" onclick="startGame()" disabled>🎯 Start Puzzle</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 3: Game -->
+<div class="screen" id="screen-game">
+  <div class="game-layout">
+    <div class="board-wrap">
+      <div class="puzzle-board" id="puzzle-board"></div>
+    </div>
+    <div class="game-sidebar">
+      <div class="stat-row"><span class="stat-label">⏱ Time</span><span class="stat-value" id="stat-time">00:00.0</span></div>
+      <div class="stat-row"><span class="stat-label">👆 Moves</span><span class="stat-value" id="stat-moves">0</span></div>
+      <div class="stat-row"><span class="stat-label">✅ Correct</span><span class="stat-value green" id="stat-correct">0 / 0</span></div>
+      <div class="stat-row"><span class="stat-label">📐 Grid</span><span class="stat-value" id="stat-grid">—</span></div>
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+      <div class="progress-label" id="progress-label">0% complete</div>
+      <div class="sidebar-actions">
+        <button class="btn btn-secondary" onclick="shuffleAgain()">🔀 Shuffle</button>
+        <button class="btn btn-secondary" onclick="showScreen('screen-difficulty')">🔙 Difficulty</button>
+        <button class="btn btn-danger" onclick="newPhoto()">📷 New Photo</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Win Overlay -->
+<div class="overlay hidden" id="win-overlay">
+  <div class="result-card">
+    <div class="result-trophy">🏆</div>
+    <div class="result-title">Puzzle Solved!</div>
+    <div class="result-sub" id="win-sub">Amazing work — you completed the puzzle!</div>
+    <div class="result-stats">
+      <div class="result-stat"><div class="val" id="win-time">—</div><div class="lbl">Time</div></div>
+      <div class="result-stat"><div class="val" id="win-moves">—</div><div class="lbl">Moves</div></div>
+      <div class="result-stat"><div class="val" id="win-diff">—</div><div class="lbl">Difficulty</div></div>
+    </div>
+    <div class="result-actions">
+      <button class="btn btn-primary" onclick="playAgain()">🔁 Play Again</button>
+      <button class="btn btn-secondary" onclick="changeDiff()">🎯 Change Difficulty</button>
+      <button class="btn btn-danger" onclick="newPhoto()">📷 New Photo</button>
+    </div>
+    <div class="leaderboard" id="leaderboard"></div>
+  </div>
+</div>
+
+<canvas id="confetti-canvas"></canvas>
+
+<script>
+// ─── State ───────────────────────────────────────────────────────────────────
+let stream = null;
+let capturedImage = null;
+let gridSize = 3;
+let pieces = [];       // [{id, correctIdx, currentIdx, canvas}]
+let cells = [];        // cell elements indexed by position
+let timerInterval = null;
+let startTime = 0;
+let elapsedMs = 0;
+let moves = 0;
+let dragging = null;
+let dragStartCell = -1;
+let touchOffsetX = 0;
+let touchOffsetY = 0;
+let dragEl = null;
+let dragClone = null;
+const BOARD_SIZE = Math.min(window.innerWidth - 80, 520);
+
+// ─── Screen Management ───────────────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ─── Camera ──────────────────────────────────────────────────────────────────
+async function startCamera() {
+  try {
+    if (stream) { stream.getTracks().forEach(t => t.stop()); }
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
+      audio: false
+    });
+    const video = document.getElementById('video');
+    video.srcObject = stream;
+    video.onloadedmetadata = () => { video.play(); };
+    document.getElementById('btn-snap').style.display = 'inline-flex';
+    document.getElementById('perm-error').style.display = 'none';
+    document.getElementById('cam-overlay').style.display = 'flex';
+  } catch (e) {
+    document.getElementById('perm-error').style.display = 'block';
+    document.getElementById('btn-snap').style.display = 'none';
+    console.error('Camera error:', e);
+  }
+}
+
+function takePhoto() {
+  const video = document.getElementById('video');
+  const canvas = document.getElementById('snapshot');
+  const size = Math.min(video.videoWidth, video.videoHeight);
+  canvas.width = 480;
+  canvas.height = 480;
+  const ctx = canvas.getContext('2d');
+  // Mirror (since video is flipped with CSS, draw normal)
+  ctx.save();
+  ctx.translate(canvas.width, 0);
+  ctx.scale(-1, 1);
+  const ox = (video.videoWidth - size) / 2;
+  const oy = (video.videoHeight - size) / 2;
+  ctx.drawImage(video, ox, oy, size, size, 0, 0, canvas.width, canvas.height);
+  ctx.restore();
+  capturedImage = canvas;
+  // Stop camera
+  if (stream) stream.getTracks().forEach(t => t.stop());
+  // Show preview
+  const prev = document.getElementById('preview-canvas');
+  prev.width = 480;
+  prev.height = 480;
+  prev.getContext('2d').drawImage(canvas, 0, 0);
+  showScreen('screen-difficulty');
+}
+
+// ─── Difficulty Selection ────────────────────────────────────────────────────
+function selectDiff(n, el) {
+  gridSize = n;
+  document.querySelectorAll('.diff-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('btn-start').disabled = false;
+}
+
+// ─── Puzzle Generation ───────────────────────────────────────────────────────
+function sliceImage(img, n) {
+  const pieceW = img.width / n;
+  const pieceH = img.height / n;
+  const result = [];
+  for (let r = 0; r < n; r++) {
+    for (let c = 0; c < n; c++) {
+      const pc = document.createElement('canvas');
+      pc.width = pieceW;
+      pc.height = pieceH;
+      pc.getContext('2d').drawImage(img, c * pieceW, r * pieceH, pieceW, pieceH, 0, 0, pieceW, pieceH);
+      result.push({ id: r * n + c, correctIdx: r * n + c, currentIdx: r * n + c, canvas: pc });
+    }
+  }
+  return result;
+}
+
+function scramble(arr) {
+  // Fisher-Yates shuffle, then check solvability (for odd grid sizes, always solvable after even # swaps)
+  const n = arr.length;
+  for (let i = n - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    // Count swaps to track parity
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+    arr[i].currentIdx = i;
+    arr[j].currentIdx = j;
+  }
+  // Make sure it's not already solved
+  if (isSolved()) scramble(arr);
+  return arr;
+}
+
+function isSolved() {
+  return pieces.every(p => p.currentIdx === p.correctIdx);
+}
+
+function startGame() {
+  showScreen('screen-game');
+  buildBoard();
+}
+
+function buildBoard() {
+  const n = gridSize;
+  const board = document.getElementById('puzzle-board');
+  board.innerHTML = '';
+  const cellSize = Math.floor((BOARD_SIZE - (n - 1) * 3) / n);
+  board.style.gridTemplateColumns = `repeat(${n}, ${cellSize}px)`;
+  board.style.gridTemplateRows = `repeat(${n}, ${cellSize}px)`;
+  board.style.gap = '3px';
+
+  // Slice & scramble
+  pieces = sliceImage(capturedImage, n);
+  scramble(pieces);
+
+  cells = [];
+  for (let i = 0; i < n * n; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'puzzle-cell';
+    cell.style.width = cellSize + 'px';
+    cell.style.height = cellSize + 'px';
+    cell.dataset.pos = i;
+    board.appendChild(cell);
+    cells.push(cell);
+  }
+
+  // Place pieces into cells
+  renderPieces();
+  attachDragEvents();
+  updateStats();
+
+  // Update sidebar
+  document.getElementById('stat-grid').textContent = `${n}×${n}`;
+  document.getElementById('stat-correct').textContent = `0 / ${n * n}`;
+
+  // Timer
+  clearInterval(timerInterval);
+  moves = 0;
+  elapsedMs = 0;
+  startTime = Date.now();
+  timerInterval = setInterval(tickTimer, 100);
+  updateMoveCount();
+}
+
+function renderPieces() {
+  const n = gridSize;
+  const cellSize = Math.floor((BOARD_SIZE - (n - 1) * 3) / n);
+  // Clear cells
+  cells.forEach(c => c.innerHTML = '');
+  // Place each piece at its currentIdx cell
+  pieces.forEach(p => {
+    const cell = cells[p.currentIdx];
+    const pc = p.canvas.cloneNode(true);
+    pc.style.width = cellSize + 'px';
+    pc.style.height = cellSize + 'px';
+    pc.style.display = 'block';
+    pc.style.pointerEvents = 'none';
+    cell.appendChild(pc);
+    cell.dataset.pieceId = p.id;
+    // Correct highlight
+    if (p.currentIdx === p.correctIdx) {
+      cell.classList.add('correct');
+    } else {
+      cell.classList.remove('correct');
+    }
+  });
+}
+
+// ─── Drag & Drop ─────────────────────────────────────────────────────────────
+function attachDragEvents() {
+  cells.forEach(cell => {
+    // Mouse
+    cell.addEventListener('mousedown', onDragStart);
+    // Touch
+    cell.addEventListener('touchstart', onTouchStart, { passive: false });
+  });
+}
+
+let dragSourceIdx = -1;
+
+function onDragStart(e) {
+  e.preventDefault();
+  dragSourceIdx = parseInt(e.currentTarget.dataset.pos);
+  const cell = cells[dragSourceIdx];
+  cell.classList.add('dragging');
+  document.addEventListener('mousemove', onDragMove);
+  document.addEventListener('mouseup', onDragEnd);
+}
+
+function onDragMove(e) {
+  if (dragSourceIdx === -1) return;
+  // Highlight target cell
+  const el = document.elementFromPoint(e.clientX, e.clientY);
+  const targetCell = el?.closest?.('.puzzle-cell');
+  cells.forEach(c => c.classList.remove('drag-over'));
+  if (targetCell && targetCell !== cells[dragSourceIdx]) {
+    targetCell.classList.add('drag-over');
+  }
+}
+
+function onDragEnd(e) {
+  if (dragSourceIdx === -1) return;
+  document.removeEventListener('mousemove', onDragMove);
+  document.removeEventListener('mouseup', onDragEnd);
+  cells.forEach(c => { c.classList.remove('dragging'); c.classList.remove('drag-over'); });
+
+  const el = document.elementFromPoint(e.clientX, e.clientY);
+  const targetCell = el?.closest?.('.puzzle-cell');
+  if (targetCell) {
+    const targetIdx = parseInt(targetCell.dataset.pos);
+    if (targetIdx !== dragSourceIdx) {
+      swapPieces(dragSourceIdx, targetIdx);
+    }
+  }
+  dragSourceIdx = -1;
+}
+
+// Touch
+let touchSourceIdx = -1;
+
+function onTouchStart(e) {
+  e.preventDefault();
+  touchSourceIdx = parseInt(e.currentTarget.dataset.pos);
+  cells[touchSourceIdx].classList.add('dragging');
+  document.addEventListener('touchmove', onTouchMove, { passive: false });
+  document.addEventListener('touchend', onTouchEnd);
+}
+
+function onTouchMove(e) {
+  e.preventDefault();
+  if (touchSourceIdx === -1) return;
+  const touch = e.touches[0];
+  const el = document.elementFromPoint(touch.clientX, touch.clientY);
+  const targetCell = el?.closest?.('.puzzle-cell');
+  cells.forEach(c => c.classList.remove('drag-over'));
+  if (targetCell && targetCell !== cells[touchSourceIdx]) {
+    targetCell.classList.add('drag-over');
+  }
+}
+
+function onTouchEnd(e) {
+  document.removeEventListener('touchmove', onTouchMove);
+  document.removeEventListener('touchend', onTouchEnd);
+  if (touchSourceIdx === -1) return;
+  cells.forEach(c => { c.classList.remove('dragging'); c.classList.remove('drag-over'); });
+
+  const touch = e.changedTouches[0];
+  const el = document.elementFromPoint(touch.clientX, touch.clientY);
+  const targetCell = el?.closest?.('.puzzle-cell');
+  if (targetCell) {
+    const targetIdx = parseInt(targetCell.dataset.pos);
+    if (targetIdx !== touchSourceIdx) {
+      swapPieces(touchSourceIdx, targetIdx);
+    }
+  }
+  touchSourceIdx = -1;
+}
+
+function swapPieces(idxA, idxB) {
+  // Find pieces at these positions
+  const pieceA = pieces.find(p => p.currentIdx === idxA);
+  const pieceB = pieces.find(p => p.currentIdx === idxB);
+  if (!pieceA || !pieceB) return;
+  pieceA.currentIdx = idxB;
+  pieceB.currentIdx = idxA;
+  moves++;
+  renderPieces();
+  updateStats();
+  checkWin();
+}
+
+// ─── Timer ────────────────────────────────────────────────────────────────────
+function tickTimer() {
+  elapsedMs = Date.now() - startTime;
+  document.getElementById('stat-time').textContent = formatTime(elapsedMs);
+}
+
+function formatTime(ms) {
+  const totalSec = Math.floor(ms / 1000);
+  const min = Math.floor(totalSec / 60);
+  const sec = totalSec % 60;
+  const tenth = Math.floor((ms % 1000) / 100);
+  return `${pad(min)}:${pad(sec)}.${tenth}`;
+}
+
+function pad(n) { return n < 10 ? '0' + n : '' + n; }
+
+function updateMoveCount() {
+  document.getElementById('stat-moves').textContent = moves;
+}
+
+function updateStats() {
+  const n = gridSize;
+  const correct = pieces.filter(p => p.currentIdx === p.correctIdx).length;
+  document.getElementById('stat-moves').textContent = moves;
+  document.getElementById('stat-correct').textContent = `${correct} / ${n * n}`;
+  const pct = Math.round((correct / (n * n)) * 100);
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-label').textContent = `${pct}% complete`;
+}
+
+// ─── Win Detection ────────────────────────────────────────────────────────────
+function checkWin() {
+  if (!isSolved()) return;
+  clearInterval(timerInterval);
+  const finalTime = formatTime(elapsedMs);
+  const diffNames = { 3: 'Easy', 4: 'Medium', 5: 'Hard' };
+  const diffName = diffNames[gridSize];
+  document.getElementById('win-time').textContent = finalTime;
+  document.getElementById('win-moves').textContent = moves;
+  document.getElementById('win-diff').textContent = diffName;
+  document.getElementById('win-sub').textContent = getWinMessage(moves, elapsedMs);
+  saveScore(finalTime, moves, diffName, elapsedMs);
+  renderLeaderboard();
+  document.getElementById('win-overlay').classList.remove('hidden');
+  launchConfetti();
+}
+
+function getWinMessage(m, ms) {
+  if (ms < 30000) return '🔥 Legendary speed! You are a puzzle god!';
+  if (ms < 60000) return '⚡ Blazing fast! Incredible solve!';
+  if (ms < 120000) return '🌟 Great job! Sharp mind at work!';
+  if (m < 30) return '🎯 Efficient solving — minimal moves!';
+  return '👏 Well done! The puzzle is conquered!';
+}
+
+// ─── Leaderboard ─────────────────────────────────────────────────────────────
+function saveScore(time, moveCount, diff, ms) {
+  let scores = JSON.parse(localStorage.getItem('facePuzzleScores') || '[]');
+  scores.push({ time, moveCount, diff, ms, date: new Date().toLocaleDateString() });
+  scores.sort((a, b) => a.ms - b.ms);
+  scores = scores.slice(0, 5);
+  localStorage.setItem('facePuzzleScores', JSON.stringify(scores));
+}
+
+function renderLeaderboard() {
+  const scores = JSON.parse(localStorage.getItem('facePuzzleScores') || '[]');
+  if (!scores.length) return;
+  const medals = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣'];
+  const rankClasses = ['rank-1', 'rank-2', 'rank-3', '', ''];
+  let html = `<div class="lb-title">🏅 Best Times</div>`;
+  scores.forEach((s, i) => {
+    html += `<div class="lb-row">
+      <span class="lb-rank ${rankClasses[i]}">${medals[i]}</span>
+      <div><div style="font-weight:600">${s.diff}</div><div class="lb-info">${s.date}</div></div>
+      <span class="lb-time">${s.time}</span>
+      <span class="lb-moves">${s.moveCount}m</span>
+    </div>`;
+  });
+  document.getElementById('leaderboard').innerHTML = html;
+}
+
+// ─── Controls ─────────────────────────────────────────────────────────────────
+function shuffleAgain() {
+  clearInterval(timerInterval);
+  moves = 0;
+  elapsedMs = 0;
+  startTime = Date.now();
+  timerInterval = setInterval(tickTimer, 100);
+  scramble(pieces);
+  renderPieces();
+  updateStats();
+}
+
+function playAgain() {
+  document.getElementById('win-overlay').classList.add('hidden');
+  stopConfetti();
+  buildBoard();
+}
+
+function changeDiff() {
+  document.getElementById('win-overlay').classList.add('hidden');
+  stopConfetti();
+  showScreen('screen-difficulty');
+}
+
+function newPhoto() {
+  document.getElementById('win-overlay').classList.add('hidden');
+  stopConfetti();
+  clearInterval(timerInterval);
+  showScreen('screen-camera');
+  startCamera();
+}
+
+// ─── Confetti ─────────────────────────────────────────────────────────────────
+let confettiAnimId = null;
+const confettiParticles = [];
+
+function launchConfetti() {
+  const canvas = document.getElementById('confetti-canvas');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const ctx = canvas.getContext('2d');
+  const colors = ['#6366f1','#8b5cf6','#10b981','#f59e0b','#ef4444','#06b6d4','#f97316'];
+  for (let i = 0; i < 120; i++) {
+    confettiParticles.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height - canvas.height,
+      w: Math.random() * 10 + 5,
+      h: Math.random() * 6 + 3,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      vx: (Math.random() - 0.5) * 4,
+      vy: Math.random() * 5 + 2,
+      rot: Math.random() * 360,
+      vr: (Math.random() - 0.5) * 6,
+      life: 1
+    });
+  }
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (let i = confettiParticles.length - 1; i >= 0; i--) {
+      const p = confettiParticles[i];
+      p.x += p.vx; p.y += p.vy; p.rot += p.vr; p.vy += 0.08;
+      ctx.save();
+      ctx.globalAlpha = p.life;
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot * Math.PI / 180);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      ctx.restore();
+      if (p.y > canvas.height + 20) confettiParticles.splice(i, 1);
+    }
+    if (confettiParticles.length > 0) confettiAnimId = requestAnimationFrame(draw);
+    else ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+  confettiAnimId = requestAnimationFrame(draw);
+}
+
+function stopConfetti() {
+  if (confettiAnimId) { cancelAnimationFrame(confettiAnimId); confettiAnimId = null; }
+  confettiParticles.length = 0;
+  const canvas = document.getElementById('confetti-canvas');
+  canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+startCamera();
+</script>
+</body>
+</html>
