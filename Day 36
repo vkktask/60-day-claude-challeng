@@ -1,0 +1,203 @@
+# Day 36 — The Model Card + Responsible AI Review Checklist
+
+**Challenge:** ABTalks 60-Day Claude AI Challenge
+**Author:** [Vivek DP](https://www.linkedin.com/in/vivekdp/)
+**Date:** Day 36 of 60
+**Time Invested:** 4 hours
+**Series:** AI Governance Operating Toolkit (Day 36 of 4-part series → 34–37)
+
+---
+
+## 🎯 Day 36 Objective
+
+Day 34 gave us the **register** (what could go wrong). Day 35 gave us the **intake/AIA** (should we build it at all). Day 36 is the **transparency + sign-off layer**: the **Model Card** that documents what a system *actually is*, and the **Responsible AI (RAI) Review Checklist** that a reviewer runs before it ships.
+
+A model card without a review is documentation theater. A review without a model card has nothing to review. Together they're the artifact an auditor, a regulator, or your own future team reaches for when they ask "what is this thing and who said it was OK?"
+
+---
+
+## 🔍 What I Did
+
+- Built a **Model Card template** — a standardized, one-page-per-model spec covering purpose, data, performance, limits, and fairness (extending the Mitchell et al. "Model Cards" pattern for the GenAI era)
+- Built a **9-domain RAI Review Checklist** with pass/fail/N-A gates a reviewer can actually run
+- Defined **who signs what** (the RACI for a go-live decision)
+- Added a **GenAI/LLM-specific supplement** because classic model cards assume a trained classifier, not a foundation-model app
+- Mapped both to ISO 42001, EU AI Act Art. 11/13, and NIST AI RMF
+
+---
+
+## 🪪 Part A — The Model Card Template
+
+*One card per model or AI system. Lives with the system and in the governance repo. Versioned.*
+
+### 1. Identity
+- **Model / system name & version**
+- **Owner** (accountable person) and **team**
+- **Date created / last updated**
+- **Linked AIA ID** (Day 35) and **Risk Register IDs** (Day 34)
+- **Lifecycle status:** Development / Staging / Production / Deprecated
+
+### 2. Intended Use
+- **Primary intended use** and **intended users**
+- **Out-of-scope / prohibited uses** (be explicit — this bounds liability)
+- **Decisions the system makes or influences**
+
+### 3. Model Details
+- **Type / architecture** (e.g., fine-tuned LLM, gradient-boosted classifier, RAG pipeline)
+- **Base/foundation model & vendor** (if applicable) + version pinning
+- **Inputs and outputs** (formats, ranges)
+- **Key hyperparameters / configuration** relevant to behavior
+
+### 4. Data
+- **Training / fine-tuning data:** sources, size, time range, provenance, licensing
+- **Retrieval/knowledge sources** (for RAG)
+- **Personal / special-category data** used and legal basis
+- **Known data limitations & representativeness gaps**
+
+### 5. Performance
+- **Evaluation metrics** and results on held-out / real-world data
+- **Evaluation dataset** description (and how it differs from production)
+- **Performance across subgroups** (not just aggregate — this is where fairness hides)
+- **Confidence / uncertainty behavior**
+
+### 6. Fairness & Bias
+- **Protected groups considered**
+- **Fairness metric(s) used** and results (e.g., disparate impact ratio)
+- **Known biases and mitigations applied**
+
+### 7. Limitations & Failure Modes
+- **Where the model is known to fail** (edge cases, distribution shift, hallucination patterns)
+- **Adversarial robustness** notes
+- **Drift/decay expectations** and monitoring plan
+
+### 8. Human Oversight & Controls
+- **Human-in/on-the-loop** design
+- **Override / escalation / kill-switch** mechanics
+- **Guardrails** (input/output filtering, rate limits, scoping)
+
+### 9. Ethical & Regulatory
+- **EU AI Act risk classification**
+- **Explainability approach** (how a decision is explained to an affected person)
+- **Environmental / compute cost** (optional but increasingly expected)
+
+---
+
+## ✅ Part B — Responsible AI Review Checklist
+
+*Run before go-live and at each material change. Every item is Pass / Fail / N-A with evidence. Any Fail in a 🔴 domain blocks release.*
+
+### Domain 1 — Documentation & Traceability
+- [ ] Model card exists, is current, and is versioned
+- [ ] AIA (Day 35) completed with a recorded decision
+- [ ] Risks logged in the register (Day 34) with owners
+
+### Domain 2 — Data Governance 🔴
+- [ ] Data provenance and licensing verified
+- [ ] Personal data has a legal basis; special-category data justified
+- [ ] Data minimization applied; retention/deletion defined
+
+### Domain 3 — Fairness & Non-Discrimination 🔴
+- [ ] Fairness tested across protected groups (not just aggregate accuracy)
+- [ ] Disparate-impact result within agreed threshold
+- [ ] Mitigations documented for known biases
+
+### Domain 4 — Robustness & Reliability
+- [ ] Performance meets defined threshold on realistic data
+- [ ] Adversarial / edge-case testing done (incl. prompt-injection eval for LLMs)
+- [ ] Drift monitoring and alerting in place
+
+### Domain 5 — Transparency & Explainability 🔴
+- [ ] Affected people can be told a decision was AI-assisted (where required)
+- [ ] A decision can be explained in plain language
+- [ ] Users are not deceived about interacting with AI (EU AI Act Art. 50)
+
+### Domain 6 — Human Oversight 🔴
+- [ ] Meaningful human review exists for consequential decisions
+- [ ] Reviewer has context, time, and authority to override
+- [ ] Kill-switch / rollback tested
+
+### Domain 7 — Security & Privacy 🔴
+- [ ] Threat model reviewed (see Day 37 series / OWASP LLM Top 10)
+- [ ] Access controls, logging, and secrets management verified
+- [ ] No sensitive data leakage via outputs or logs
+
+### Domain 8 — Legal & Regulatory
+- [ ] EU AI Act classification confirmed; obligations met for the tier
+- [ ] Sector-specific rules checked (finance, health, employment)
+- [ ] IP/copyright of training data and outputs assessed
+
+### Domain 9 — Monitoring & Lifecycle
+- [ ] Production monitoring (quality, fairness, drift, abuse) defined
+- [ ] Incident response path defined (Day 37)
+- [ ] Re-review triggers and owner assigned
+
+---
+
+## 🤖 GenAI / LLM Supplement
+
+Classic model cards assume a trained model you control. Foundation-model apps need extra fields:
+
+- **Prompt & system-message versioning** — the prompt *is* part of the model behavior; version it
+- **Vendor model pinning** — record exact model version; vendor updates change behavior silently
+- **RAG source freshness & scoping** — what the model can retrieve, and per-tenant isolation
+- **Guardrail stack** — input filters, output filters, refusal behavior, jailbreak resistance
+- **Eval suite** — hallucination rate, prompt-injection resistance, toxicity, task accuracy — run in CI
+- **Data-use terms** — does the vendor train on your inputs? (contractual no-train clause)
+
+---
+
+## 🧑‍⚖️ Sign-off RACI
+
+| Decision | Model Owner | AI Gov Lead | Security | Legal/DPO | Gov Board |
+|----------|:-----------:|:-----------:|:--------:|:---------:|:---------:|
+| Model card complete | **R** | A | C | C | I |
+| RAI checklist run | C | **R/A** | C | C | I |
+| Tier 2 go-live | R | **A** | C | C | I |
+| Tier 1 (high-risk) go-live | R | R | C | C | **A** |
+
+*R = Responsible, A = Accountable, C = Consulted, I = Informed*
+
+---
+
+## 🧠 Key Takeaways
+
+1. **Documentation is a control, not overhead.** The model card is the single artifact that lets a new engineer, an auditor, and a regulator understand a system without reverse-engineering it. It pays for itself the first time someone leaves the team.
+
+2. **Aggregate accuracy hides discrimination.** A model can be 95% accurate overall and systematically wrong for one group. The checklist forces subgroup evaluation, which is exactly what the EU AI Act and fair-lending regulators demand.
+
+3. **The prompt is part of the model.** For GenAI apps, behavior lives in the prompt, the retrieval scope, and the guardrails — not just the base model. If you don't version those, your model card describes a system that no longer exists.
+
+4. **Red domains create a real gate.** Making six of nine domains hard-blockers turns the checklist from a suggestion into a release gate. A green-lit checklist with a failed fairness domain should be impossible.
+
+5. **RACI ends the "who approved this?" problem.** Post-incident, the first question is always who signed off. Deciding that *before* go-live — and writing it down — is half of governance maturity.
+
+---
+
+## 🛠️ Tools Used
+
+- Claude (Opus 5) in Cowork mode — template + checklist design, RACI, GenAI supplement
+- Model Cards for Model Reporting (Mitchell et al., 2019) — foundational pattern
+- ISO/IEC 42001:2023 (A.6, A.9)
+- EU AI Act (Art. 11 technical documentation, Art. 13 transparency, Art. 50)
+- NIST AI RMF 1.0 (Measure & Manage)
+
+---
+
+## 📚 Resources Referenced
+
+- [Model Cards for Model Reporting (Mitchell et al.)](https://arxiv.org/abs/1810.03993)
+- [EU AI Act — technical documentation (Art. 11, Annex IV)](https://artificialintelligenceact.eu/)
+- [ISO/IEC 42001:2023 — ISO.org](https://www.iso.org/standard/81230.html)
+- [NIST AI RMF](https://airc.nist.gov/)
+- [Google Model Card Toolkit](https://modelcards.withgoogle.com/about)
+
+---
+
+## 🔗 Connect
+
+- LinkedIn: [Vivek DP](https://www.linkedin.com/in/vivekdp/)
+- GitHub: [vkktask/60-day-claude-challeng](https://github.com/vkktask/60-day-claude-challeng)
+
+---
+
+*Part of the VP AI Governance Roadmap | ABTalks 60-Day Challenge · Day 36 · AI Governance Operating Toolkit (3/4)*
