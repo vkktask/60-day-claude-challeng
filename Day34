@@ -1,0 +1,205 @@
+# Day 34 — The AI Risk Register (A Working Template)
+
+**Challenge:** ABTalks 60-Day Claude AI Challenge
+**Author:** [Vivek DP](https://www.linkedin.com/in/vivekdp/)
+**Date:** Day 34 of 60
+**Time Invested:** 4 hours
+**Series:** AI Governance Operating Toolkit (Day 34 of 4-part series → 34–37)
+
+---
+
+## 🎯 Day 34 Objective
+
+Most AI governance programs die in the gap between *policy* and *practice*. A team writes a beautiful ISO 42001 / NIST AI RMF policy, then has no operational artifact to actually run it. The **AI Risk Register** is that artifact — the single source of truth where every AI system, its risks, owners, controls, and residual exposure live and get reviewed.
+
+Today I built a **ready-to-use AI Risk Register template** — the taxonomy, the scoring model, the workflow, and three worked examples — so a governance lead can stand one up in an afternoon instead of a quarter.
+
+---
+
+## 🔍 What I Did
+
+- Defined an **AI-specific risk taxonomy** (not a generic infosec register with "AI" bolted on)
+- Built a **likelihood × impact scoring model** with explicit anchors so scores are repeatable across reviewers
+- Designed the **register schema** (the columns) and the **lifecycle workflow** (how a risk moves from identified → treated → monitored)
+- Mapped every risk category back to **ISO 42001, NIST AI RMF, and EU AI Act** so the register doubles as audit evidence
+- Wrote **3 worked example entries** (a RAG chatbot, an HR screening model, a third-party GenAI connector) to show the template in real use
+
+---
+
+## 🧭 The AI Risk Taxonomy
+
+A good register starts with a shared vocabulary. Generic risk registers fail on AI because they can't name model-specific failure modes. These eight categories cover the AI lifecycle:
+
+| # | Risk Category | What It Captures | Example Risk |
+|---|---------------|------------------|--------------|
+| 1 | **Data & Privacy** | Training/inference data quality, provenance, PII exposure, consent, retention | Model memorizes and regurgitates PII from training data |
+| 2 | **Bias & Fairness** | Disparate outcomes across protected groups, proxy discrimination | Screening model down-ranks candidates from one demographic |
+| 3 | **Robustness & Reliability** | Model drift, hallucination, adversarial inputs, degradation over time | Accuracy silently decays 6 months post-deployment |
+| 4 | **Transparency & Explainability** | Inability to explain a decision, missing model documentation | Regulator asks "why was this loan denied" and no one can answer |
+| 5 | **Security** | Prompt injection, model/data exfiltration, poisoning, insecure plugins | Injected prompt causes the agent to leak system context |
+| 6 | **Human Oversight & Autonomy** | Over-reliance, missing human-in-the-loop for high-stakes decisions | Automated action taken with no human review path |
+| 7 | **Legal & Regulatory** | Non-compliance with EU AI Act, sector law, IP/copyright of outputs | High-risk system deployed without conformity assessment |
+| 8 | **Third-Party & Supply Chain** | Vendor model risk, dataset licensing, connector/API exposure | Foundation-model vendor changes behavior without notice |
+
+---
+
+## 📏 The Scoring Model
+
+Every risk is scored on **Likelihood (1–5)** and **Impact (1–5)**. The score is `Likelihood × Impact` (1–25), bucketed into a rating. The anchors below are what make scoring *repeatable* — without them, two reviewers score the same risk differently.
+
+### Likelihood anchors
+
+| Score | Label | Anchor |
+|-------|-------|--------|
+| 1 | Rare | No known occurrence; would require multiple controls to fail |
+| 2 | Unlikely | Possible but not expected in normal operation |
+| 3 | Possible | Could occur within a 12-month window |
+| 4 | Likely | Expected to occur without additional controls |
+| 5 | Almost certain | Already occurring or occurs frequently |
+
+### Impact anchors
+
+| Score | Label | Anchor (harm to individuals, org, or rights) |
+|-------|-------|--------|
+| 1 | Negligible | Minor inconvenience, no rights impact, trivial cost |
+| 2 | Minor | Limited harm to a few users, easily reversible |
+| 3 | Moderate | Material harm to a group, reputational hit, some regulatory interest |
+| 4 | Major | Serious harm to individuals' rights, regulatory action, significant loss |
+| 5 | Severe | Widespread harm, safety impact, fundamental-rights violation, existential legal exposure |
+
+### Rating bands
+
+| Score (L×I) | Rating | Required Action | SLA to treat |
+|-------------|--------|-----------------|--------------|
+| 1–4 | 🟢 Low | Accept & monitor | Next review cycle |
+| 5–9 | 🟡 Moderate | Treat with standard controls | 90 days |
+| 10–15 | 🟠 High | Treat; requires governance-board visibility | 30 days |
+| 16–25 | 🔴 Critical | Do not deploy / halt until mitigated | Immediate |
+
+---
+
+## 🗂️ The Register Schema (Columns)
+
+Copy these columns into a spreadsheet or GRC tool. Each row is one risk on one AI system.
+
+| Field | Description |
+|-------|-------------|
+| **Risk ID** | Unique key, e.g. `AIR-2026-001` |
+| **AI System / Use Case** | The system this risk attaches to |
+| **Lifecycle Stage** | Design / Data / Train / Validate / Deploy / Monitor / Retire |
+| **Risk Category** | One of the 8 taxonomy categories |
+| **Risk Description** | Plain-language "what could go wrong and why" |
+| **Cause / Trigger** | The condition that would realize the risk |
+| **Potential Impact** | Who is harmed and how |
+| **Inherent Likelihood** | 1–5 (before controls) |
+| **Inherent Impact** | 1–5 (before controls) |
+| **Inherent Score** | L × I |
+| **Existing Controls** | Controls already in place |
+| **Residual Likelihood / Impact / Score** | 1–5 each, after controls |
+| **Risk Owner** | Named accountable person (not a team) |
+| **Treatment Decision** | Accept / Mitigate / Transfer / Avoid |
+| **Treatment Actions** | Specific tasks + due dates |
+| **Framework Mapping** | ISO 42001 clause / NIST AI RMF function / EU AI Act article |
+| **Status** | Open / In Treatment / Monitoring / Closed |
+| **Last Reviewed / Next Review** | Dates |
+
+---
+
+## 🔁 The Lifecycle Workflow
+
+A register is a *process*, not a document. A risk moves through five states:
+
+1. **Identify** — Anyone can raise a risk (intake form, red-team, incident, audit). It lands as `Open`.
+2. **Assess** — Governance lead scores inherent risk, assigns an owner, maps to frameworks.
+3. **Treat** — Owner selects Accept / Mitigate / Transfer / Avoid and defines actions with dates.
+4. **Verify** — Controls are implemented; residual risk is re-scored. Critical/High require board sign-off.
+5. **Monitor** — Risk moves to `Monitoring`; re-reviewed each cycle (monthly for Critical, quarterly for the rest). Reopens on drift, incident, or system change.
+
+> **Rule of thumb:** any AI system that changes materially — new data source, new model version, new use case — triggers a re-assessment of its register entries. The register is only as good as its freshness.
+
+---
+
+## 🧪 Worked Examples
+
+### AIR-2026-001 — RAG customer-support chatbot
+
+| Field | Value |
+|-------|-------|
+| Risk Category | Security (prompt injection) |
+| Description | Malicious user embeds instructions in a support ticket that the bot ingests via retrieval, causing it to reveal internal system prompt / other customers' data |
+| Inherent L×I | 4 × 4 = **16 🔴 Critical** |
+| Existing Controls | Input sanitization, retrieval scoping to tenant |
+| Residual L×I | 2 × 4 = **8 🟡 Moderate** |
+| Owner | Head of Support Platform |
+| Treatment | Mitigate — add output filtering, prompt-injection eval in CI, human escalation path |
+| Mapping | NIST AI RMF *Manage 2.3*; OWASP LLM01; EU AI Act Art. 15 (accuracy & robustness) |
+
+### AIR-2026-002 — HR résumé-screening model
+
+| Field | Value |
+|-------|-------|
+| Risk Category | Bias & Fairness |
+| Description | Model trained on historical hiring data reproduces past demographic skew, down-ranking qualified candidates from underrepresented groups |
+| Inherent L×I | 4 × 5 = **20 🔴 Critical** |
+| Existing Controls | None at intake |
+| Residual L×I | 2 × 4 = **8 🟡 Moderate** |
+| Owner | VP People + AI Governance Lead (joint) |
+| Treatment | Mitigate — fairness testing across protected groups, human-in-the-loop for all rejects, quarterly disparate-impact audit |
+| Mapping | ISO 42001 A.6.2 (impact assessment); EU AI Act Annex III (high-risk: employment); NIST AI RMF *Measure 2.11* |
+
+### AIR-2026-003 — Third-party GenAI connector (SaaS)
+
+| Field | Value |
+|-------|-------|
+| Risk Category | Third-Party & Supply Chain |
+| Description | Enterprise data routed to an external GenAI vendor whose data-use, retention, and sub-processor terms are opaque; vendor may train on inputs |
+| Inherent L×I | 3 × 4 = **12 🟠 High** |
+| Existing Controls | DPA in place |
+| Residual L×I | 2 × 3 = **6 🟡 Moderate** |
+| Owner | Procurement + CISO delegate |
+| Treatment | Mitigate — contractual no-train clause, data-minimization at the boundary, vendor SOC 2 + AI addendum review, kill-switch |
+| Mapping | ISO 42001 A.10 (third-party); ISO 27001 A.5.19; EU AI Act Art. 25 (obligations along value chain) |
+
+---
+
+## 🧠 Key Takeaways
+
+1. **A register beats a policy.** Boards and auditors don't want your AI policy PDF — they want to see the live list of AI systems, their risks, owners, and residual exposure. The register *is* your governance program made visible.
+
+2. **Anchors are the whole game.** Scoring without written likelihood/impact anchors produces numbers no two people agree on. The anchors turn a subjective gut-check into a repeatable, defensible rating.
+
+3. **Inherent vs. residual tells the story.** The delta between inherent and residual score is the quantified value of your controls — exactly the narrative a CISO needs for a budget conversation.
+
+4. **Freshness is a control.** A register reviewed once a year is theater. Tie re-assessment to *system change events*, not just the calendar.
+
+5. **Map once, report many times.** Because every row maps to ISO 42001 / NIST AI RMF / EU AI Act, the same register answers an ISO auditor, a regulator, and the board — no re-work.
+
+---
+
+## 🛠️ Tools Used
+
+- Claude (Opus 5) in Cowork mode — taxonomy design, scoring model, worked examples
+- ISO/IEC 42001:2023 (Annex A controls)
+- NIST AI RMF 1.0 (Govern / Map / Measure / Manage functions)
+- EU AI Act (high-risk obligations, Annex III)
+- OWASP Top 10 for LLM Applications
+
+---
+
+## 📚 Resources Referenced
+
+- [NIST AI Risk Management Framework](https://airc.nist.gov/)
+- [ISO/IEC 42001:2023 Overview — ISO.org](https://www.iso.org/standard/81230.html)
+- [EU AI Act — full text](https://artificialintelligenceact.eu/)
+- [OWASP Top 10 for LLM Applications](https://owasp.org/www-project-top-10-for-large-language-model-applications/)
+
+---
+
+## 🔗 Connect
+
+- LinkedIn: [Vivek DP](https://www.linkedin.com/in/vivekdp/)
+- GitHub: [vkktask/60-day-claude-challeng](https://github.com/vkktask/60-day-claude-challeng)
+
+---
+
+*Part of the VP AI Governance Roadmap | ABTalks 60-Day Challenge · Day 34 · AI Governance Operating Toolkit (1/4)*
