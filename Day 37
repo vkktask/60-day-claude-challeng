@@ -1,0 +1,191 @@
+# Day 37 — The AI Incident Response Playbook
+
+**Challenge:** ABTalks 60-Day Claude AI Challenge
+**Author:** [Vivek DP](https://www.linkedin.com/in/vivekdp/)
+**Date:** Day 37 of 60
+**Time Invested:** 4 hours
+**Series:** AI Governance Operating Toolkit (Day 37 of 4-part series → 34–37)
+
+---
+
+## 🎯 Day 37 Objective
+
+The register (Day 34) tracks what *could* go wrong. This playbook is for when it *does*. AI incidents aren't classic security incidents — a model can be "up" and fully "secure" while quietly discriminating, hallucinating harmful advice, or leaking training data through its outputs. Standard SEV runbooks miss these entirely.
+
+Today I built an **AI Incident Response Playbook**: what counts as an AI incident, how to triage severity, who does what, the step-by-step runbook, ready-to-use comms templates, and the regulatory clocks (EU AI Act, GDPR) that start ticking the moment you detect one. This closes the loop — incidents feed learnings straight back into the register and model cards.
+
+---
+
+## 🔍 What I Did
+
+- Defined the **AI incident taxonomy** — the failure modes classic IR plans don't cover
+- Built a **4-tier severity model** with declaration criteria and response SLAs
+- Wrote the **6-phase runbook** (Detect → Triage → Contain → Eradicate → Recover → Learn) adapted for AI
+- Defined the **incident response team roles** and decision authority
+- Created **communication templates** (internal, executive, affected users, regulator)
+- Mapped the **regulatory reporting clocks** (EU AI Act Art. 73, GDPR 72-hour)
+
+---
+
+## 🌪️ What Counts as an AI Incident
+
+An AI incident is any event where an AI system causes, or is about to cause, harm, rights impact, legal exposure, or loss of trust. Categories most IR plans miss:
+
+| Type | Example |
+|------|---------|
+| **Harmful output** | Model gives dangerous medical/legal/financial advice; generates toxic or defamatory content |
+| **Discriminatory outcome** | Systematic bias detected in a live decision system |
+| **Data leakage via model** | Model regurgitates PII/secrets from training data or context; prompt-injection exfiltration |
+| **Hallucination with consequence** | Fabricated fact drives a real-world action (wrong refund, wrong diagnosis) |
+| **Prompt injection / jailbreak** | Attacker manipulates an agent into unauthorized actions |
+| **Model drift / degradation** | Silent accuracy decay causes a spike in wrong decisions |
+| **Unauthorized / rogue use** | Shadow AI, or a system used outside its approved scope |
+| **Third-party model failure** | Vendor changes/deprecates a model, breaking behavior or safety |
+| **Autonomy failure** | An agent takes a consequential action with no human review path |
+
+---
+
+## 🚨 Severity Tiers
+
+| Tier | Criteria | Response SLA | Who's engaged |
+|------|----------|:------------:|---------------|
+| **SEV-1 — Critical** | Active harm to people, rights violation at scale, regulatory-reportable, or safety impact | **Immediate** — halt system | Full IRT + exec + legal/DPO |
+| **SEV-2 — High** | Serious risk, limited harm occurring, or high reputational exposure | **< 4 hours** | IRT + AI gov lead + comms |
+| **SEV-3 — Moderate** | Contained issue, no ongoing harm, workaround exists | **< 1 business day** | System owner + AI gov lead |
+| **SEV-4 — Low** | Minor, no harm, quality/near-miss | **Next cycle** | System owner |
+
+> **Declare high, downgrade later.** Under-calling an AI incident is the expensive mistake — you lose containment time and blow regulatory clocks. Start high; downgrade once you understand blast radius.
+
+---
+
+## 🔧 The Runbook — 6 Phases
+
+### 1. Detect
+Sources: monitoring/drift alerts, user reports, red-team, employee report, vendor notice, media/social. Log **time of detection** — regulatory clocks may start here. Open an incident record.
+
+### 2. Triage
+- Assign a severity tier and an **Incident Commander**
+- Determine **blast radius**: which systems, how many people, what data, is harm *ongoing*?
+- Start the **incident timeline** (you'll need it for the post-mortem and any regulator)
+
+### 3. Contain
+Stop the bleeding *before* diagnosing root cause:
+- **Kill-switch / roll back** to a safe version, disable the feature, or route to human-only
+- Revoke compromised credentials/keys; scope down a leaking retrieval source
+- Preserve evidence: prompts, inputs, outputs, logs, model version, config
+
+### 4. Eradicate
+- Root-cause: data issue? prompt/config? model version? adversarial input? drift?
+- Fix the actual cause (retrain, re-prompt, patch guardrail, pin/replace vendor model)
+- Validate the fix against the failure that caused the incident (add it to the eval suite)
+
+### 5. Recover
+- Restore service in a controlled way with heightened monitoring
+- Confirm the failure mode no longer reproduces
+- Remediate affected people (reverse wrong decisions, notify, compensate)
+
+### 6. Learn
+- **Blameless post-mortem** within 5 business days
+- Update the **Risk Register (Day 34)**, **Model Card (Day 36)**, and eval suite
+- Track corrective actions to closure; feed systemic issues into the AIA (Day 35)
+
+---
+
+## 👥 Incident Response Team (IRT)
+
+| Role | Responsibility |
+|------|----------------|
+| **Incident Commander** | Owns the response, makes the calls, runs the timeline |
+| **AI/Model Owner** | Technical containment, root cause, fix |
+| **AI Governance Lead** | Severity, rights/harm assessment, regulatory trigger call |
+| **Security** | If security-driven (injection, exfiltration, poisoning) |
+| **Legal / DPO** | Regulatory reporting decisions, liability, notifications |
+| **Comms** | Internal, executive, external, and regulator messaging |
+| **Executive Sponsor** | SEV-1 authority (halt product, public statement) |
+
+---
+
+## 📣 Communication Templates
+
+**Internal alert (SEV declared)**
+> `[SEV-{n}] AI Incident — {system}`. Detected {time}. Impact: {who/what}. Status: {contained?}. IC: {name}. Next update: {time}. Do not discuss externally.
+
+**Executive brief**
+> What happened, who's affected, is harm ongoing, containment status, regulatory exposure, decision(s) needed from you, next update time. One page, no jargon.
+
+**Affected-user notice**
+> Plain language: what happened, how it affected you, what we've done, what you should do, how to get help/redress. No blame-shifting, no minimizing.
+
+**Regulator notification (skeleton)**
+> Nature of the incident, AI system and purpose, individuals/rights affected, timeline, measures taken, contact point. File within the required window (below).
+
+---
+
+## ⏱️ Regulatory Clocks
+
+| Trigger | Regime | Clock |
+|---------|--------|-------|
+| Serious incident from a high-risk AI system | **EU AI Act Art. 73** | Report to authority **without undue delay**, and no later than **15 days** (shorter for death/widespread breach) |
+| Personal-data breach | **GDPR Art. 33** | Notify DPA within **72 hours** of awareness |
+| Breach with high risk to individuals | **GDPR Art. 34** | Notify affected individuals **without undue delay** |
+| Sector rules (finance/health) | Varies | Check sector regulator SLAs |
+
+> The clock often starts at **detection/awareness**, not at "when we finished investigating." This is why Phase 1 logs the detection time and why you engage Legal/DPO early on SEV-1/2.
+
+---
+
+## 🔁 How This Closes the Toolkit Loop
+
+The four days are one system:
+
+- **Day 35 (AIA)** decides *if* a system is built and at what tier
+- **Day 34 (Register)** tracks its risks and residual exposure
+- **Day 36 (Model Card + RAI Review)** documents it and gates go-live
+- **Day 37 (IR Playbook)** handles failure — and every incident **updates the register, the model card, and the eval suite**, so the program learns
+
+That feedback loop — incidents flowing back into intake, risk, and documentation — is the difference between a governance *program* and a stack of governance *documents*.
+
+---
+
+## 🧠 Key Takeaways
+
+1. **AI incidents ≠ security incidents.** A model can be up, patched, and fully "secure" while discriminating, hallucinating, or leaking through its outputs. If your only IR plan is the infosec SEV runbook, these failure modes go undetected until a user or a regulator finds them.
+
+2. **Detection time is a legal fact.** EU AI Act and GDPR clocks often start at awareness. Logging when you detected — and engaging legal early — protects you from missing a reporting window while you're still investigating.
+
+3. **Contain before you diagnose.** The instinct is to find root cause first. Wrong order. Roll back / kill-switch / route-to-human first to stop ongoing harm, *then* investigate.
+
+4. **Blameless post-mortems build reporting culture.** If reporting an AI near-miss gets someone blamed, reporting stops and you lose your best early-warning signal. Blameless learning is the control that makes everything else work.
+
+5. **The loop is the point.** An incident that doesn't update the register, the model card, and the eval suite is a lesson thrown away. Closing the loop is what turns four templates into a living management system.
+
+---
+
+## 🛠️ Tools Used
+
+- Claude (Opus 5) in Cowork mode — playbook design, severity model, comms templates, regulatory mapping
+- NIST SP 800-61 (Computer Security Incident Handling) — adapted for AI
+- ISO/IEC 42001:2023 (A.10 incident + operation)
+- EU AI Act (Art. 73 serious incident reporting)
+- GDPR (Art. 33/34 breach notification)
+
+---
+
+## 📚 Resources Referenced
+
+- [NIST SP 800-61 — Incident Handling Guide](https://csrc.nist.gov/pubs/sp/800/61/r2/final)
+- [EU AI Act — serious incident reporting (Art. 73)](https://artificialintelligenceact.eu/)
+- [GDPR Art. 33 & 34 — breach notification](https://gdpr-info.eu/art-33-gdpr/)
+- [OECD AI Incidents Monitor](https://oecd.ai/en/incidents)
+- [NIST AI RMF — Manage function](https://airc.nist.gov/)
+
+---
+
+## 🔗 Connect
+
+- LinkedIn: [Vivek DP](https://www.linkedin.com/in/vivekdp/)
+- GitHub: [vkktask/60-day-claude-challeng](https://github.com/vkktask/60-day-claude-challeng)
+
+---
+
+*Part of the VP AI Governance Roadmap | ABTalks 60-Day Challenge · Day 37 · AI Governance Operating Toolkit (4/4)*
