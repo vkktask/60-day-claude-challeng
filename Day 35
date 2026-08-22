@@ -1,0 +1,175 @@
+# Day 35 — AI System Intake & Impact Assessment (The AIA Form)
+
+**Challenge:** ABTalks 60-Day Claude AI Challenge
+**Author:** [Vivek DP](https://www.linkedin.com/in/vivekdp/)
+**Date:** Day 35 of 60
+**Time Invested:** 4 hours
+**Series:** AI Governance Operating Toolkit (Day 35 of 4-part series → 34–37)
+
+---
+
+## 🎯 Day 35 Objective
+
+Yesterday's Risk Register (Day 34) needs a *front door*. That front door is the **AI Intake & Impact Assessment (AIA)** — the form every new AI use case fills out *before* it gets built or bought. It's where governance shifts left: you catch a high-risk, EU-AI-Act-regulated, PII-hungry use case at the idea stage, not after it's in production.
+
+Today I built a **two-stage AIA**: a lightweight **Intake Triage** (5 minutes, anyone can fill it) that routes a use case to the right level of review, followed by a **Full Impact Assessment** (only for use cases the triage flags). This is directly modeled on **ISO 42001 Clause 6.1.2** (AI system impact assessment) and the **EU AI Act** high-risk classification logic.
+
+---
+
+## 🔍 What I Did
+
+- Designed a **triage tier model** so 80% of low-risk use cases clear in minutes and reviewers focus on the 20% that matter
+- Built the **Intake Triage form** (the 5-minute front door) with auto-routing logic
+- Built the **Full Impact Assessment** — 7 sections covering purpose, data, affected people, rights impact, alternatives, and human oversight
+- Wrote the **decision gate** logic: Approve / Approve-with-conditions / Escalate / Reject
+- Mapped the whole form to ISO 42001, EU AI Act, and NIST AI RMF *Map* function
+
+---
+
+## 🚦 The Tiering Model
+
+Not every use case deserves a 20-page assessment. The triage sorts use cases into three tiers and routes accordingly:
+
+| Tier | Description | Review Required | Example |
+|------|-------------|-----------------|---------|
+| **Tier 3 — Minimal** | Internal productivity, no personal data, no consequential decisions | Self-attest + register entry | Summarizing public docs |
+| **Tier 2 — Limited** | Some personal data OR affects internal users, reversible decisions | Lightweight review by AI gov lead | Internal knowledge chatbot |
+| **Tier 1 — High** | Consequential decisions about people, sensitive data, or an EU-AI-Act Annex III domain | **Full Impact Assessment + governance board** | Hiring, credit, healthcare, biometric use cases |
+
+**Auto-escalation triggers** — any *one* of these forces Tier 1 regardless of triage answers:
+- The system makes or materially influences a decision about a person's **employment, credit, housing, education, healthcare, insurance, or legal status**
+- It processes **special-category data** (health, biometrics, race, religion, sexual orientation, criminal history)
+- It's a use case named in **EU AI Act Annex III** (high-risk) or **Article 5** (prohibited — auto-reject)
+- It affects **children** or other vulnerable groups
+- It operates with **no meaningful human review** of its outputs
+
+---
+
+## 📋 Part A — Intake Triage (the 5-minute front door)
+
+*Anyone proposing an AI use case fills this in.*
+
+| # | Question | Type |
+|---|----------|------|
+| A1 | Use case name & one-line description | Text |
+| A2 | Requesting team & business sponsor | Text |
+| A3 | What problem does this solve? What's the alternative today? | Text |
+| A4 | Build, buy, or use a third-party GenAI service? | Choice |
+| A5 | Does it use personal data? (none / internal staff / customers / special-category) | Choice |
+| A6 | Does it make or influence a decision *about a person*? | Yes/No |
+| A7 | Is the domain in EU AI Act Annex III (employment, credit, biometrics, essential services, law enforcement, education, migration)? | Yes/No |
+| A8 | Is there a human reviewing outputs before they take effect? | Yes/No |
+| A9 | Roughly how many people are affected, and how reversible is a wrong output? | Text |
+
+**Routing:** Any Yes on A6/A7, "special-category" on A5, or "No" on A8 → **Tier 1 (Full AIA)**. Otherwise the lead assigns Tier 2 or 3.
+
+---
+
+## 📝 Part B — Full Impact Assessment (Tier 1)
+
+### Section 1 — Purpose & Context
+- Intended purpose and explicitly **out-of-scope** uses
+- Business value and the cost of *not* doing it
+- Who decided to build this and why now
+
+### Section 2 — Data
+- Data sources (training, fine-tuning, inference/retrieval) with provenance and licensing
+- Personal / special-category data used, legal basis, and consent status
+- Data minimization: what's collected vs. what's actually needed
+- Retention, deletion, and cross-border transfer
+
+### Section 3 — The Model / System
+- Model type, vendor/version, and whether it's foundation-model-based
+- Known limitations, accuracy expectations, and evaluation approach
+- Whether inputs are used to train the vendor's model (for third-party)
+
+### Section 4 — Affected People & Rights Impact
+- Who is affected (users, subjects of decisions, third parties, non-users)
+- **Rights & harms analysis:** could this affect dignity, non-discrimination, privacy, access to services, safety, or autonomy?
+- Disproportionate impact on any group; fairness testing plan
+- Worst realistic case for an individual on the receiving end of a wrong output
+
+### Section 5 — Human Oversight
+- Where a human is in / on / out of the loop
+- What the human can actually do (override, escalate, halt) and whether they have the info/time to do it
+- Guard against **automation bias** (people rubber-stamping the AI)
+
+### Section 6 — Alternatives & Proportionality
+- Non-AI or simpler alternatives considered
+- Why the chosen approach is proportionate to the problem
+- Whether the least-intrusive option was selected
+
+### Section 7 — Risk Summary & Treatment
+- Top 5 risks → feed straight into the **Day 34 Risk Register**
+- Residual risk after planned controls
+- Monitoring plan and re-assessment triggers
+
+---
+
+## ✅ The Decision Gate
+
+The AIA ends in one of four outcomes, recorded with a named decision-maker and date:
+
+| Outcome | Meaning |
+|---------|---------|
+| 🟢 **Approved** | Proceed; register the system and its risks |
+| 🟡 **Approved with conditions** | Proceed only after listed controls are in place; conditions tracked to closure |
+| 🟠 **Escalate** | Governance board / DPO / legal decision required before proceeding |
+| 🔴 **Rejected** | Do not proceed (prohibited use, disproportionate risk, or unmitigable harm) |
+
+> **Non-negotiable:** no Tier 1 AI system goes to production without a completed AIA and a recorded decision. The AIA is the evidence an ISO 42001 auditor or EU AI Act regulator will ask for first.
+
+---
+
+## 🗺️ Framework Mapping
+
+| AIA Element | ISO 42001 | EU AI Act | NIST AI RMF |
+|-------------|-----------|-----------|-------------|
+| Intake triage / tiering | Clause 6.1 (risk-based) | Risk classification (Art. 6, Annex III) | *Map 1* |
+| Full impact assessment | **Clause 6.1.2 + A.6.2** | Art. 27 (fundamental-rights impact assessment) | *Map 2, 3* |
+| Data section | A.7 (data for AI) | Art. 10 (data governance) | *Map 4* |
+| Human oversight | A.9.2 | Art. 14 (human oversight) | *Manage 1* |
+| Decision gate + records | Clause 9 (evaluation) | Art. 11 & 18 (documentation, record-keeping) | *Govern 1.4* |
+
+---
+
+## 🧠 Key Takeaways
+
+1. **Governance that shifts left is cheaper.** Catching a prohibited or high-risk use case at intake costs a 5-minute form. Catching it in production costs a recall, a regulator, and a headline.
+
+2. **Two stages beat one.** A single heavy form gets ignored or gamed. A fast triage that *earns* the right to a full assessment respects everyone's time and still catches what matters.
+
+3. **Auto-escalation triggers prevent gaming.** Self-reported triage can be talked down ("it's not really a decision about people..."). Hard triggers on Annex III domains and special-category data remove the wiggle room.
+
+4. **The AIA feeds the register.** Section 7 outputs become Day 34 register rows. The toolkit is one connected system, not four separate documents.
+
+5. **Human oversight is where most AIAs are weakest.** "A human reviews it" is meaningless if the human has 4 seconds, no context, and 500 cases a day. The form forces you to describe oversight that's actually real.
+
+---
+
+## 🛠️ Tools Used
+
+- Claude (Opus 5) in Cowork mode — form design, tiering logic, framework mapping
+- ISO/IEC 42001:2023 (Clause 6.1.2, Annex A.6.2)
+- EU AI Act (Art. 6, 14, 27; Annex III)
+- NIST AI RMF 1.0 (Map function)
+
+---
+
+## 📚 Resources Referenced
+
+- [EU AI Act — high-risk classification & Annex III](https://artificialintelligenceact.eu/)
+- [ISO/IEC 42001:2023 — ISO.org](https://www.iso.org/standard/81230.html)
+- [NIST AI RMF Playbook — Map function](https://airc.nist.gov/)
+- [Canada's Algorithmic Impact Assessment (reference model)](https://www.canada.ca/en/government/system/digital-government/digital-government-innovations/responsible-use-ai/algorithmic-impact-assessment.html)
+
+---
+
+## 🔗 Connect
+
+- LinkedIn: [Vivek DP](https://www.linkedin.com/in/vivekdp/)
+- GitHub: [vkktask/60-day-claude-challeng](https://github.com/vkktask/60-day-claude-challeng)
+
+---
+
+*Part of the VP AI Governance Roadmap | ABTalks 60-Day Challenge · Day 35 · AI Governance Operating Toolkit (2/4)*
