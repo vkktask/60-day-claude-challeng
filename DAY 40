@@ -1,0 +1,10 @@
+Day 40 — AI Connector Risk Reviewer ("Aegis")
+`day40-ai-connector-risk-reviewer.html`
+
+Purpose-built AI assistant (not a generic chatbot). Reviewer fills a structured intake (connector name, provider, data sensitivity, data-source chips, capabilities) and gets back a scored verdict.
+
+- Calls the Claude Messages API live via `fetch` to `https://api.anthropic.com/v1/messages` (in the ABTalks environment the key is handled for you).
+- Radial **risk-score dial** + colour-coded **APPROVE / APPROVE WITH RESTRICTIONS / REJECT** badge.
+- Seven expandable risk domains (OWASP LLM Top 10, Agentic Top 10, NIST AI RMF) each with level, score bar, findings, and top recommended control; plus open questions for the reviewer.
+- Production-grade system prompt with a strict JSON output contract and edge-case handling (irrelevant input, missing info → assume-worst, abuse).
+- Collapsible **"How this was built"** panel with the verbatim system prompt.
