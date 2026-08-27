@@ -1,0 +1,81 @@
+# Day 43 — AI Workflow Architect
+
+**Challenge:** ABTalks 60-Day Claude Challenge · Day 43
+**Deliverable:** A premium single-page HTML application that generates a complete, end-to-end workflow for a chosen process — not general advice or a checklist.
+**Scope built (auto-structured):** `AI Governance → Security Review → **AI Connector / Integration Risk Review**`
+
+---
+
+## What it is
+
+`ai-workflow-architect.html` is a self-contained workflow platform (HTML + CSS + vanilla JS, **zero external libraries**). Instead of generic tips, it maps the **AI Connector Risk Review** process end-to-end across **8 stages**, from intake to continuous monitoring, and makes each stage interactive and trackable.
+
+**The 8 stages**
+
+1. **Intake & Scoping** → **2. Discovery & Data Mapping** → **3. Threat Modeling** → **4. Policy & Compliance Mapping** → **5. Testing & Validation** → **6. Risk Scoring** → **7. Decision & Documentation** → **8. Monitoring & Continuous Review**
+
+**Every stage includes** exactly what the brief asked for: an **objective**, **tasks**, the **best AI tools** for that stage with **why each is recommended** and **alternatives**, **prompt examples** (copy-to-clipboard), **best practices**, **common mistakes**, **expected outputs**, a **time estimate**, and **efficiency tips**.
+
+**Interactive features**
+
+- **Clickable stage rail / workflow diagram** with per-stage completion state and connectors.
+- **Progress tracking** — tick tasks and the top bar shows % complete and stages/tasks done (persisted).
+- **Notes** per stage and **bookmarks**, all saved to `localStorage`.
+- **AI Tool Comparison** matrix (role, key stages, fit rating).
+- **Interactive Decision Tree** — "How deep should this review go?" branches on data sensitivity, scopes/agentic actions, and provider location to a concrete recommendation.
+- **Workflow Summary + Recommended AI Stack**, **Learning Resources**, **Communities**, **Search Keywords**, **Additional AI Prompts**, and **Future Automation Opportunities**.
+- **Printable workflow guide** (`@media print` expands all stages into a clean linear document), **dark/light mode**, responsive layout, and smooth animations.
+
+Content is grounded in real frameworks a governance reviewer uses — STRIDE, OWASP LLM Top 10, NIST AI RMF, ISO 27001/42001, MITRE ATLAS/ATT&CK, and LLM red-team tooling (Garak, PyRIT, Promptfoo).
+
+---
+
+## Screenshots
+
+### Stage detail — Intake & Scoping (tasks, tools, prompts, progress)
+![Workflow stage detail](screenshots/01-workflow-stage-detail.png)
+
+### Threat Modeling stage
+![Threat modeling stage](screenshots/02-threat-modeling-stage.png)
+
+### AI Tool Comparison matrix
+![AI tool comparison](screenshots/03-ai-tool-comparison.png)
+
+### Interactive Decision Tree (resolved recommendation)
+![Decision tree](screenshots/04-decision-tree.png)
+
+### Workflow Summary + Recommended AI Stack
+![Summary and stack](screenshots/05-summary-and-stack.png)
+
+### Light mode
+![Light mode](screenshots/06-light-mode.png)
+
+---
+
+## Files
+
+| File | Description |
+|------|-------------|
+| `ai-workflow-architect.html` | The complete single-file application. Open in any browser. |
+| `screenshots/` | Rendered screenshots of the stages, comparison, and decision tree. |
+
+---
+
+## Key learnings
+
+1. **"Generate a workflow" ≠ "give advice."** The brief's sharpest constraint was to produce a real end-to-end process, not a checklist. Modeling the review as **8 sequential stages, each with objective → tasks → tools → outputs**, is what turns it into something a person can actually *execute* and hand off — the outputs of one stage are literally the inputs of the next.
+
+2. **Scoping the domain to a single mappable process is the whole game.** "AI Governance" is un-buildable; **"AI Connector Risk Review"** maps cleanly from intake to monitoring. The prompt's insistence on narrowing (domain → sub-area → specific process) is exactly why the result is concrete instead of vague — the same lesson as a good problem statement.
+
+3. **A workflow is data; the UI is a renderer.** Keeping the entire workflow as one structured `WF` object and rendering the rail, panel, comparison table, decision tree, and print view from it means the content and the presentation stay decoupled. Adding a stage or a tool is a data edit, not a UI rewrite.
+
+4. **Interactivity has to earn its place.** Progress tracking, notes, and bookmarks (all in `localStorage`) make the app a working companion through a real review rather than a poster. The decision tree adds genuine judgment — it routes reviewers to *lightweight vs. full* depth based on data sensitivity and scopes, which is the actual first decision in this work.
+
+5. **Recommend tools with a reason and an alternative.** Listing an AI tool is cheap; saying **why** it fits a stage and what to use **instead** is what makes recommendations trustworthy. Pairing each with a ready-to-paste prompt turns the guide into something you act on immediately.
+
+6. **Grounding in real frameworks is what makes it credible.** Because the stages reference STRIDE, OWASP LLM Top 10, NIST AI RMF, ISO 42001, MITRE ATLAS, and tools like Garak/PyRIT, the workflow reads as a professional playbook rather than AI-generated filler — and it doubles as a training artifact for someone new to AI security review.
+
+---
+
+### How to submit
+Commit this markdown, `ai-workflow-architect.html`, and the `screenshots/` folder to your challenge repo and submit the resulting **GitHub commit URL** as the Day 43 deliverable.
