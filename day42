@@ -1,0 +1,76 @@
+# Day 42 — Personal Financial Command Center
+
+**Challenge:** ABTalks 60-Day Claude Challenge · Day 42
+**Deliverable:** A premium, single-file HTML application that helps a user understand, manage, and improve their financial health — not just track expenses.
+**Profile built for:** Freelancer · primary focus **Budgeting & Cash Flow** · dashboard auto-designed.
+
+---
+
+## What it is
+
+`financial-command-center.html` is a self-contained dashboard (HTML + CSS + vanilla JS, **zero external libraries**). It opens with an overview command center and flows into personalized modules chosen for a freelancer whose biggest challenge is smoothing irregular income and controlling cash flow.
+
+**Modules included**
+
+- **Overview KPIs** — average monthly income (rolling 3-mo), expenses, net cash flow, and *runway* (months of savings) with month-over-month deltas.
+- **Financial Health Score** — a weighted 0–100 score rendered as an animated SVG ring, broken into five drivers: savings rate, runway, budget balance, income diversity, goal progress.
+- **6-month cash-flow chart** — income vs. expenses bars built in pure CSS/JS.
+- **Income streams** — tagged by stability (stable / variable / one-off), the metric that matters most for freelancers.
+- **Expenses & subscriptions** — categorized spend plus a subscription auditor showing annual cost.
+- **50/30/20 budget check** — maps real spending to Needs / Wants / Savings with a target marker.
+- **Savings goals** — progress bars with an auto-calculated ETA at the current surplus.
+- **What-if simulator** — live sliders for cutting expenses, boosting income, and extra saving that instantly recompute net cash flow, projected savings, and new runway.
+- **AI recommendations** — rules-driven insights (tax set-aside, income-concentration risk, subscription load, runway gap) tailored to the numbers on screen.
+- **Literacy layer** — freelancer checklist, profile-specific tips, curated resources, and copy-to-clipboard prompts for going deeper.
+
+**Premium touches:** responsive layout, **dark + light mode** (persisted), local-storage persistence of all data, one-click **printable report** (`@media print`), smooth animations, toasts, and an empty-state-safe design. Educational tool — not financial advice.
+
+---
+
+## Screenshots
+
+### Full dashboard (dark)
+![Full dashboard, dark mode](screenshots/01-dashboard-dark.png)
+
+### Overview KPIs + Financial Health
+![Overview and health score](screenshots/02-overview-health.png)
+
+### 50/30/20 Budget + Subscription auditor
+![Budget and subscriptions](screenshots/03-budget-subscriptions.png)
+
+### Savings Goals + What-If Simulator (live)
+![Goals and what-if simulator](screenshots/04-goals-whatif.png)
+
+### AI Recommendations
+![AI recommendations](screenshots/05-ai-recommendations.png)
+
+### Light mode
+![Full dashboard, light mode](screenshots/06-dashboard-light.png)
+
+---
+
+## Files
+
+| File | Description |
+|------|-------------|
+| `financial-command-center.html` | The complete single-file application. Open in any browser. |
+| `screenshots/` | Rendered screenshots of each module. |
+
+---
+
+## Key learnings
+
+1. **Profiling before generating changes the whole product.** Asking the profile questions one-at-a-time (freelancer → cash-flow focus → auto-design) meant the dashboard led with *runway* and *income stability* — metrics a salaried template would bury. The prompt's insistence on narrowing the profile first is what makes the output feel personal instead of generic.
+
+2. **A health *score* beats a pile of numbers.** Collapsing five weighted drivers into one 0–100 ring gives an instant read, and exposing the sub-bars keeps it honest and actionable. Choosing sensible targets (20% savings rate, 6-month runway) and normalizing each driver to 0–1 was the core design decision.
+
+3. **"Understand and improve," not "track."** The brief explicitly wanted more than an expense tracker. The what-if simulator and the rules-based recommendations are what deliver that — they turn static data into *"if I cut 15% and raise income 20%, my runway goes from 3.2 to 20+ months."* That's the moment a dashboard becomes a decision tool.
+
+4. **Constraints force cleaner engineering.** No libraries meant charts, the SVG progress ring, and state management were all hand-rolled. `stroke-dasharray`/`dashoffset` for the ring and flex columns for the bar chart proved that a polished look doesn't require a charting dependency — and the file stays instantly portable.
+
+5. **Persistence + print are cheap wins that read as "premium."** `localStorage` (wrapped in try/catch so it degrades gracefully) plus a dedicated `@media print` stylesheet took little code but make the app feel like a real product rather than a demo.
+
+---
+
+### How to submit
+Commit this markdown, `financial-command-center.html`, and the `screenshots/` folder to your challenge repo and submit the resulting **GitHub commit URL** as the Day 42 deliverable.
