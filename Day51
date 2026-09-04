@@ -1,0 +1,142 @@
+# Day 51 — Capstone Kickoff: Product Discovery & Sprint Planning
+
+**Challenge:** ABTalks 60-Day Claude Challenge
+**Track:** Capstone Project — Day 1 of 10
+**Author:** [Vivek Kumar](https://www.linkedin.com/in/vivekdp/)
+**Day:** 51 of 60
+**Deliverables:** `PRD.md`, `IMPLEMENTATION-BLUEPRINT.md`, `connector-gate-pitch.pptx`
+
+---
+
+## 🎯 Objective
+
+Go from no project to a fully defined one: discover the right problem, scope a v1.0 that can actually be finished in nine remaining days, and produce a blueprint detailed enough that each remaining day is execution rather than re-planning.
+
+No tech stack chosen today. No code written today. That was the brief's constraint and it was the right one.
+
+---
+
+## 🧭 The Project: Connector Gate
+
+**Connector Gate** is a free, public, entirely client-side web tool that takes a security reviewer who has just been handed their first GenAI connector request — and has no AI-specific process for it — from intake to a defensible written verdict in one sitting.
+
+It enforces a review that cannot silently skip anything: all six STRIDE categories, all ten OWASP LLM Top 10 (2025) categories, and a five-question insider-threat pass. Each must be assessed or explicitly marked "no applicable threat" *with a written reason*. It scores inherent and residual risk against fixed bands, refuses to credit any control that has not been evidenced, issues exactly one of three verdicts, and exports a CISO-ready memo in a fixed section order.
+
+It runs on GitHub Pages. No account, no server, nothing leaving the browser.
+
+### Why this project
+
+The discovery interview settled three things in order, and each one narrowed the next.
+
+**What is the capstone for?** Not a portfolio piece — **evidence of original contribution**. My EB-1A record's thinnest criterion is external adoption: I can show deep internal work, but "impact on my employer" is not "impact on the field," and USCIS treats those as different claims. A public, deployed tool that other practitioners actually use is the exact evidence that gap needs. That decision then constrained everything downstream: it had to be public, free, and usable without an account.
+
+**Which project?** Four candidates. Connector Gate won because I already own the content — the methodology from 21 real connector reviews — so nine days goes entirely into building rather than learning the domain. The alternatives (an ISO 42001 readiness assessor, a framework crosswalk explorer, a prompt-injection harness) were either narrower, more content-heavy than engineering-heavy, or dependent on an endpoint I do not have.
+
+**Where does it deploy?** GitHub Pages, which forces static-only. That constraint turned out to be an asset, not a limitation — see below.
+
+---
+
+## 🔒 The Scope Decisions Worth Recording
+
+### What is deliberately out
+
+Multi-review register · accounts · any server or database · **live AI calls** · PDF export · Jira/ServiceNow integrations · collaboration · editable frameworks · benchmark data from real reviews.
+
+Two of those need explaining.
+
+**No live AI calls** is a product decision, not a shortcut. It buys three things at once: anyone can use the tool instantly with no account, which is what the adoption goal requires; the output is deterministic, which is what makes a set of reviews comparable to each other; and there is no inference cost, so nothing throttles adoption. Day 50's app *needed* a live model to work. This one is better without one.
+
+**No benchmark data** is a confidentiality line. The generalised methodology and the recurring failure patterns are mine to publish. The findings, the connector names, the metrics and any aggregate derived from them are my employer's, and aggregate internal findings can still be confidential. That line got drawn on Day 51 rather than discovered on Day 59.
+
+### Day 10 success — testable, not aspirational
+
+1. A live public URL
+2. A stranger with no account completes a full review and exports a memo in under 20 minutes
+3. All 21 categories provably un-skippable — proven by a test that tries to reach a verdict with one unanswered and is blocked
+4. Identical inputs produce an identical score, verified in CI
+5. Methodology, limitations and licence published
+6. **Three external practitioners have used it**
+
+Criterion 6 is the one that makes this evidence rather than a portfolio entry, and it is the one most likely to slip — which is why outreach lands on Day 59, not Day 60.
+
+---
+
+## 🧠 Key Learnings
+
+**1. "What is this for?" had to be answered before "what is it?"**
+I could have picked a project on interestingness and built something good. Asking what the capstone was *for* first — evidence of contribution, specifically — eliminated three of four candidates immediately and dictated the deployment target, the pricing (free), the account model (none), and the licence. Purpose is a scoping tool, not a preamble.
+
+**2. The static-hosting constraint is the architecture.**
+GitHub Pages means no server. That sounds limiting until you notice what it *guarantees*: no data at rest anywhere but the reviewer's own browser, nothing to breach, no account to create, no inference bill, and determinism by construction. For a tool whose users are handling other people's confidential architecture, "there is no server" is a stronger security claim than any control I could implement. The constraint stopped being something to work around and became the pitch.
+
+**3. Naming one primary user is the real scope-creep defence.**
+Not the out-of-scope list — that comes second. "A security engineer handed their first GenAI connector request, who has hours not weeks" answers feature questions on its own. Does this user need a multi-review register? No, they have one review. Does this user need team collaboration? No, they need to produce a document today. Four features fell away without a debate.
+
+**4. Freezing the scoring spec on the design day is what makes testing possible on Day 58.**
+The blueprint requires Day 52 to write ten hand-computed worked examples — input to expected output — and freeze them. Those examples *become* the test fixtures six days later. Tests written against a frozen spec catch real bugs; tests written against finished code just describe whatever the code already does.
+
+**5. Writing the plan so a *different* assistant could continue it forced real specificity.**
+Each remaining day begins a fresh conversation, so every day's section had to carry its own context. That constraint killed a lot of hand-waving. "Build the scoring engine" became reduction factors, the multiplication rule, the 10% floor, and the exact reason the floor exists. If a plan only works because the planner is in the room, it is notes, not a blueprint.
+
+**6. I wrote the cut order before I needed it.**
+CSV export → JSON import → OWASP sweep → insider pass. Decided today, calmly, with the whole project in view. On Day 57 at 11pm, tired and behind, is the worst possible moment to decide what matters least.
+
+**7. Verify the load-bearing facts even when you think you know them.**
+The app enforces all ten OWASP LLM categories *by name*. I checked the OWASP GenAI Security Project's own page rather than writing them from memory — the list changed between the 2023/24 and 2025 editions, and three of the current ten (System Prompt Leakage, Vector and Embedding Weaknesses, Unbounded Consumption) are not what I would have recalled. A tool whose whole value is rigour cannot ship a wrong category list.
+
+---
+
+## 📦 Deliverables
+
+| File | What it is |
+|---|---|
+| `PRD.md` | Full product requirements — problem, user, principles, 13 functional requirements, the complete scoring model and verdict rules, data model, non-functional targets, success criteria, risk register with mitigations |
+| `IMPLEMENTATION-BLUEPRINT.md` | Days 52–60, each with objective, learning goals, features, step-by-step plan, files, tools, testing tasks, debugging tips, end-of-day checklist, expected state and handoff notes — plus a standing context block and a change log |
+| `connector-gate-pitch.pptx` | Nine-slide pitch deck: problem, users, solution, the one rule the product is built on, key features, technical approach, future scope, vision |
+
+One thing worth noting about the blueprint: my nine-day plan lined up almost exactly with the challenge's own Day 52–60 themes (system design → setup → core features → MVP → refinement → testing → launch → v1.0.0). That was not coordination — it is just what a real software lifecycle looks like when you plan one honestly.
+
+---
+
+## ⚠️ Honest Risks
+
+The risk register in the PRD names seven. The three I actually expect to fight:
+
+- **Scope creep into the multi-review register.** It is the most obviously useful next feature and the most dangerous to start early, because the single-review loop has to work first. It is named in the PRD as post-v1.0 so it can be wanted without being built.
+- **Framework content taking longer than the app.** Authoring 21 categories with a genuine AI-specific note each is a full day's work. It is Day 54's only deliverable for that reason.
+- **No external users by Day 10.** Three named practitioners must be identified by Day 57 and contacted on Day 59. Naming them is a Day 57 checklist item, not an intention.
+
+---
+
+## 📣 LinkedIn Post
+
+> Day 51 of 60. The capstone kickoff: from no idea to a defined project, a full PRD, and a nine-day blueprint. No code today — that was the point.
+>
+> The first question I answered was not "what should I build?" It was **"what is this for?"**
+>
+> My answer: evidence of original contribution. Not a portfolio piece.
+>
+> That single decision eliminated three of my four candidate projects in about a minute. Here's why it's not just career admin: in AI governance, I can show deep internal work — but *impact on my employer* is not *impact on the field*, and those are treated as different claims. Closing that gap needs something public that other practitioners actually use. So the project had to be free, deployed, and usable with no account.
+>
+> **What I'm building: Connector Gate.** A free, entirely client-side tool that takes a security reviewer who's just been handed their first GenAI connector request — and has no AI-specific process for it — from intake to a defensible verdict in one sitting. Six STRIDE categories, ten OWASP LLM Top 10, a five-question insider-threat pass, none of them skippable. Fixed scoring bands. A memo you can attach to a ticket without editing.
+>
+> Three things this planning day taught me:
+>
+> **The constraint became the pitch.** GitHub Pages means no server, which sounds limiting until you see what it guarantees: no data at rest anywhere but the reviewer's own browser, nothing to breach, no account, no inference cost, and determinism by construction. For users handling other people's confidential architecture, "there is no server" is a stronger security claim than any control I could build.
+>
+> **Naming one user beat writing an out-of-scope list.** "A security engineer with hours, not weeks, handling their first AI connector" answers feature questions by itself. Does that person need a multi-review register? No — they have one review. Four features fell away without debate.
+>
+> **I wrote the cut order today, before I need it.** CSV export → JSON import → OWASP sweep → insider pass. Decided calmly with the whole project in view, because Day 57 at 11pm is the worst possible moment to decide what matters least.
+>
+> One more: I deliberately built this with **no live AI calls**. Day 50's app needed a model to work. This one is better without one — deterministic output is what makes twenty reviews comparable to each other, and no account is what makes adoption possible.
+>
+> Nine days to a deployed v1.0. Success criterion #6 is the one that scares me: three external practitioners have to actually use it.
+>
+> @Anthropic @ABTalksOnAI @AnilBajpai
+>
+> \#60DayClaudeChallenge #AIGovernance #ProductManagement #AISecurity
+
+---
+
+*Part of my VP AI Governance roadmap | ABTalks 60-Day Claude Challenge*
+[GitHub](https://github.com/vkktask/60-day-claude-challeng) · [LinkedIn](https://www.linkedin.com/in/vivekdp/)
