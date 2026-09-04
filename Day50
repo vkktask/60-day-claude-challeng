@@ -1,0 +1,171 @@
+# Day 50 — Defend Your Experience: An Adversarial Adjudicator for EB-1A Claims
+
+**Challenge:** ABTalks 60-Day Claude Challenge
+**Track:** AI Career Intelligence
+**Author:** [Vivek Kumar](https://www.linkedin.com/in/vivekdp/)
+**Day:** 50 of 60
+**Deliverable:** `defend-your-experience.html` (single self-contained file), Defense Report export, screenshots
+
+---
+
+## 🎯 Objective
+
+Build an adaptive interview defense simulator. The brief is explicit that the goal is **not** to improve a résumé — it is to be able to defend every claim you make about yourself.
+
+I pointed it at the hardest version of that problem I actually have: **an EB-1A petition**, where the reader is a sceptical USCIS adjudicator whose job is to find the weakest link, and where an inflated claim does not just fail — it damages the credibility of every other claim in the filing.
+
+Pressure setting: **consistently adversarial.** Hostile from question one, every claim assumed inflated until evidenced.
+
+---
+
+## 🧱 What I Built
+
+A single self-contained HTML application. You paste your CV, petition draft, expert letter or contribution statement; it extracts every assertion that would have to be defended, then interrogates you on each one and produces a Defense Report.
+
+| Section | What it does |
+|---|---|
+| **Start** | Drag-and-drop or paste your material; choose your interrogator and criterion emphasis |
+| **Claims** | Every assertion extracted, classified by evidence gap, with red-flag language quoted |
+| **Defend** | The interrogation. One claim at a time, each question written from your previous answer |
+| **Defense Report** | Per-claim defense strength, what breaks and the question that breaks it, remediation plan |
+| **Past Sessions** | Saved locally so you can resume or compare runs |
+
+### Grounded in real evidentiary doctrine, not invented interview questions
+
+This is the part that mattered most. The interrogator is built on the actual standards an EB-1A petition is judged against, encoded as data rather than vibes:
+
+- **8 red-flag patterns** — unsupported acclaim, vague importance, future-only significance, employer-only significance, implausible basis of knowledge, legal conclusions in the recommender's mouth, template artifacts, verification-required claims. Each carries *why it matters* and *what cures it*.
+- **5 evidence-gap categories** — strong and supported / usable with packaging / weak / missing / risky.
+- **10 standard adjudicator challenges** — the questions a sceptical reader actually asks, each labelled with what it tests.
+- **The 6-link claim chain** — Claim → why true → how known → what proves it → why unusual → why it matters.
+- **4 interrogator personas** — USCIS adjudicator, your own attorney stress-testing before filing, an independent expert deciding whether to sign, and an RFE reviewer looking for grounds to deny.
+
+The single test the whole tool applies: **if every flattering adjective were removed, would the remaining facts still persuade a sceptical reader?** If not, the problem is the evidence, not the wording — and polishing the prose actively hides it.
+
+### Two modes, and the badge tells you which one you are in
+
+- **Live** — claims extracted from your document; every follow-up written from what you just said; a written verdict in the report.
+- **Offline** — no Claude connection, so the page runs a deterministic red-flag scan over your text, segments it into candidate claims, prioritises the ten standard challenges by which flags fired, and records your answers into a locally-scored report.
+
+---
+
+## 🔑 The Design Problem Worth Writing About
+
+**The brief contains a contradiction, and resolving it honestly was the whole build.**
+
+It says to call the Anthropic Messages API directly from the HTML, assume authentication is handled automatically, and never ask for an API key or build a backend. Then the task list says to save the file and *open it locally in your browser*.
+
+Those cannot both be true. A local file has no authentication and no way to obtain any. Three ways to handle that:
+
+1. Write the API call and let it fail silently when opened locally. Works in a demo, dead on arrival for the user.
+2. Ask for an API key. Explicitly forbidden, and rightly — pasting a key into an HTML file is a bad habit to teach.
+3. **Detect the runtime, and make the degraded path do real work.**
+
+I took the third. The page asks the runtime what it has, branches on absence, and switches to a mode where the useful parts still function. The critical design decision: **offline mode is not an error message.** The red-flag scanner is pure regex over your text — it needs no model, no network, and it catches the eight patterns that account for most weak petition language. Opened as a local file with no connection at all, the tool still tells you that "one of the world's leading" is unsupported acclaim and that "has the potential to influence" is future-only significance.
+
+Graceful degradation was a stated requirement of the brief. I read it as a design principle rather than a `catch` block.
+
+---
+
+## 🎨 Design Plan
+
+Recorded because the choices were deliberate:
+
+- **Palette** — ink ground with a slight blue bias (`#0e1014` / `#16191f`), muted slate-violet accent (`#8b9ada` dark, `#3f4fa8` light). The semantic set — green, amber, red, magenta — is kept entirely separate from the accent, so severity never competes with interface colour.
+- **Type** — **Newsreader** (serif) for headings *and for the claims under examination*; **IBM Plex Sans** for interface; **IBM Plex Mono** for labels, scores and tags. The typographic idea carries the meaning: the words being scrutinised are set as a document, the machinery around them as an instrument.
+- **Layout** — one column at 1100px. Claims are a **numbered register with hairline separators** — a case file, not a grid of floating cards. Elevation is spent exactly twice: the active claim panel and the modal. The numbering is real information: claims are ordered weakest-first.
+
+---
+
+## 🧠 Key Learnings
+
+**1. Adversarial is a design decision that has to be enforced structurally, not requested politely.**
+Telling a model "be tough" produces tough-sounding encouragement. What actually works is removing its room to be generous: fixed distinctions it must hold you to, an explicit instruction never to invent evidence on your behalf, and a rule that it may not move on from a vague answer but must go *narrower*. The persona is the framing; the constraints are the mechanism.
+
+**2. The scoring had to be built so the model cannot inflate it.**
+The interrogator closes with an `ASSESSMENT:` line carrying a 0–100 defense score. I parse that, clamp it to range, and — critically — the report's remediation prompt instructs that anything asserted but not evidenced during the interrogation is listed as an **open item, not a strength**. Without that rule, a self-assessing interrogator drifts toward crediting the petitioner for having answered rather than for having evidenced.
+
+**3. In this domain the guardrail *is* the product.**
+Every prompt in the app carries an instruction never to invent a metric, exhibit, citation or recognition. That is not defensive boilerplate. A petition is a signed legal record; a fabricated detail found by USCIS taints everything else in the filing. So where evidence is absent the tool says **missing** and names what would close it. A tool that helpfully filled the gap would be actively dangerous, and it would be *easy* to build by accident — a model asked to strengthen a claim will strengthen it, evidence or no evidence.
+
+**4. Conversation state has a precise shape, and getting it wrong fails loudly.**
+The turn list must start and end with a user turn, standing instructions live in a leading user turn that is always kept (there is no system role), and caching must be off for every turn of a real conversation or the second identical question replays the first answer. I also cap the document slice well under the input limit rather than measuring bytes. These are not incidental details — each one is a class of bug that only appears once someone is actually using the thing.
+
+**5. Errors need to be branched on, not caught in a lump.**
+I mapped every error code to a specific behaviour: hide the feature permanently for `not_granted` and `sampling_disabled`; tell the user to wait and let *them* retry on `rate_limited`; keep the partial answer on `upstream_error`; clear the screen on `refused` because the partial is withdrawn. And never retry from a loop — a page that retries automatically spends someone else's usage on a failure that was not transient.
+
+**6. Writing the red-flag scanner was the most useful hour I have spent on my own petition.**
+The eight patterns are regexes, and testing them meant writing realistic bad sentences. I recognised several as things I have written. The worked example bundled with the app is deliberately mixed quality for that reason — and the bullet I wrote to demonstrate *unsupported acclaim* is close to something that was in an actual draft.
+
+**7. An empty form is a bad first frame for a tool.**
+The app opens with the worked example already loaded and the red-flag scan already showing four hits — plainly labelled as an example, not passed off as your material. A tool that opens as a blank textarea demonstrates nothing about what it does.
+
+---
+
+## 🧪 How I Verified It
+
+- **Doctrine completeness** — 8 red flags, 10 challenges, 5 gap categories, 6 chain links, 4 personas all present; every red flag confirmed to carry a substantive *why* and *cure*.
+- **Every pattern fires** — each of the 8 regexes tested against a realistic probe sentence written for it. All 8 fired.
+- **No false positives** — clean evidentiary prose ("applied to 21 reviews… evidenced by Exhibit 4, cited by two independent practitioners") produces zero flags apart from the numeric verify-before-use flag, which is correct behaviour.
+- **Regex state** — scanning the same text twice returns identical results, confirming no `lastIndex` leak across calls. This is a real bug class with global regexes and it would have silently under-reported on every scan after the first.
+- **Scorer discriminates** — a thin answer scores 25; a specific answer naming an exhibit, external adoption and comparative context scores 80; a purely forward-looking answer scores 17. The scorer is measuring what it claims to measure.
+- **Challenge prioritisation** — an employer-flagged claim gets the employer-vs-field challenge first; a future-flagged claim gets demonstrated-vs-potential first; the bank walks all 10 without repeating.
+- **Assessment parsing** — score extracted correctly, clamped at 100 when the model returns 140, and *not* falsely triggered by prose that merely mentions an assessment.
+- **DOM wiring** — all 38 `#id` references resolve against the markup; all `data-*` hooks present. Zero missing.
+- **Runtime contract** — verified the page never reads a `window.claude.sample` member (it uses the resolver), branches on `null`, creates a new AbortController per call, assigns rather than appends streamed text, disables caching on conversation turns, and branches on error `code` rather than message.
+- **Design pass** — light palette in bare `:root`, dark under a guarded `prefers-color-scheme` query *and* an explicit stamp, so all three viewer theme states resolve; body paints its own background; reduced-motion honoured; visible focus states; tabular numerals on every score column.
+
+---
+
+## ⚠️ Honest Limits
+
+- **Not legal advice.** Nothing here is an opinion on whether a petition will be approved. Everything needs attorney review before filing.
+- **It will not write your evidence.** Where something is missing it says missing. That is the point, not a limitation to work around.
+- **Text only.** The page has no network access and cannot parse PDF or Word — open the document and paste the text.
+- **Offline scores are heuristic.** They measure answer length, whether you named an exhibit, whether you gave comparative context and external evidence, and whether you fell back on forward-looking language. Useful signal, not an assessment.
+- **Sessions live in one browser.** Export the report if it matters.
+
+---
+
+## 🛠️ Files in This Folder
+
+| File | What it is |
+|---|---|
+| `defend-your-experience.html` | The app. Runs offline as a local file; adaptive when it has a Claude runtime. |
+| `day50.md` | This writeup. |
+| `build/` | Build sources (`shell.html`, `style.css`, `data.js`, `app.js`) concatenated into the single file. Deletable. |
+| `screenshots/` | Claims register, interrogation mid-exchange, Defense Report, red-flag detail. |
+| `defense-report-*.txt` | Exported Defense Report from an actual run. |
+
+---
+
+## 📣 LinkedIn Post
+
+> Day 50 of 60. The task was to build an adaptive interview defense simulator. I pointed it at the hardest version of that problem I actually have: **defending an EB-1A petition to a sceptical adjudicator.**
+>
+> Not a résumé improver. The opposite. You paste your own claims about your own work, and it attacks them.
+>
+> The test the whole tool applies: **if every flattering adjective were removed, would the remaining facts still persuade a sceptical reader?** If not, the problem is the evidence — and polishing the prose actively hides that.
+>
+> Three things I learned building it:
+>
+> **1. Adversarial has to be enforced structurally, not requested politely.** Telling a model "be tough" gets you tough-sounding encouragement. What works is removing its room to be generous: fixed distinctions it must hold you to (originality is not major significance; employer impact is not field impact; demonstrated impact is not potential impact), an explicit bar on inventing evidence, and a rule that a vague answer gets a *narrower* question rather than a pass.
+>
+> **2. In this domain, the guardrail is the product.** A petition is a signed legal record. A fabricated detail found by USCIS doesn't just fail one claim — it taints the credibility of everything else in the filing. So where evidence is absent, the tool says **missing** and names what would close it. A tool that helpfully filled the gap would be actively dangerous. And it would be easy to build by accident: ask a model to strengthen a claim and it will strengthen it, evidence or no evidence.
+>
+> **3. The brief contradicted itself, and resolving that honestly was the whole build.** It said to call the API directly with auth handled automatically — then said to open the file locally. Both cannot be true; a local file has no authentication. I could have written the call and let it fail silently. Instead I made the degraded path do real work: the red-flag scanner is pure regex over your text, needs no model and no network, and catches the eight patterns behind most weak petition language. Opened as a local file with zero connection, it still tells you that "one of the world's leading" is unsupported acclaim and "has the potential to influence" is future-only significance.
+>
+> Graceful degradation was in the brief. I read it as a design principle, not a catch block.
+>
+> The uncomfortable part: writing those eight regexes meant composing realistic bad sentences to test them. I recognised several as things I have written.
+>
+> Single self-contained HTML file. Adversarial by default.
+>
+> @Anthropic @ABTalksOnAI @AnilBajpai
+>
+> \#60DayClaudeChallenge #EB1A #AIGovernance #ResponsibleAI
+
+---
+
+*Part of my VP AI Governance roadmap | ABTalks 60-Day Claude Challenge*
+[GitHub](https://github.com/vkktask/60-day-claude-challeng) · [LinkedIn](https://www.linkedin.com/in/vivekdp/)
