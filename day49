@@ -1,0 +1,171 @@
+# Day 49 — Personal AI Playbook: Turning My AI Habits Into a Consistency System
+
+**Challenge:** ABTalks 60-Day Claude Challenge
+**Track:** Personal AI Systems
+**Author:** [Vivek Kumar](https://www.linkedin.com/in/vivekdp/)
+**Day:** 49 of 60
+**Deliverable:** `personal-ai-playbook.html` (single self-contained file), `workflow-library.json`, screenshots
+
+---
+
+## 🎯 Objective
+
+Build a personalised, fully interactive AI playbook — not a prompt collection, but a system of reusable building blocks that combine into whatever the task needs.
+
+The interview step asked what my actual bottleneck is. My answer wasn't "writing prompts is slow." It was:
+
+> **Review #7 and review #21 don't score or phrase the same way — and that's a problem when the whole set gets audited as a body of work.**
+
+That single answer reshaped the build. Everything below is designed for **determinism**, not for flexibility.
+
+---
+
+## 🧱 What I Built
+
+A single HTML file (134 KB, no libraries, no network calls, runs offline) with six sections:
+
+| Section | What it does |
+|---|---|
+| **Dashboard** | Library overview, how-to-start, and whether the consistency layer is active |
+| **Workflow Library** | 19 workflows across 6 categories — template + dropdown variables + worked example + best practices |
+| **Prompt Builder** | 9 building blocks, each self-explaining, live preview |
+| **Loop Builder** | 5 blocks that convert a one-shot prompt into a self-grading, self-terminating loop |
+| **House Rules** | My fixed standards, prepended to everything I build — the consistency layer |
+| **Backup & Import** | JSON export/import, merge or replace, reset |
+
+### The numbers
+
+- **19 workflows** in 6 categories, all written for my actual practice
+- **305 dropdown options** across workflow variables — no free-text where a choice will do
+- **9 prompt blocks × 6 options each** → **29.6 million** distinct block combinations, rather than a list of stored prompts
+- **8 house rules**, 6 active by default
+- **62 DOM bindings**, all verified to resolve
+
+### The six categories
+
+1. **Connector & AI Risk Review** — intake triage, STRIDE model, insider-threat pass, residual scoring & verdict
+2. **Threat Modeling & Red Team** — OWASP LLM Top 10 sweep, prompt-injection kill chain, MITRE ATT&CK mapping
+3. **Framework & Policy Mapping** — ISO 42001↔27001 gap map, EU AI Act classification, NIST AI RMF crosswalk
+4. **GRC Writing & Deliverables** — CISO one-page verdict memo, structured Jira comment, long-form report skeleton
+5. **Skill & Agent Engineering** — productise a repeated task, write a triggering description, red-team your own skill
+6. **EB-1A & Career Positioning** — criterion evidence mapper, letter claim-to-exhibit map, publication angle finder
+
+---
+
+## 🔑 The Design Decision That Mattered
+
+**House Rules is the whole point of the build.**
+
+Rather than re-stating my standards in every new conversation, they live in one place and get prepended automatically:
+
+- Fixed risk bands (Critical 90–100 … Informational 0–14) — never invented, never half-banded
+- Every sentence labelled `SOURCED FACT` or `ANALYST JUDGEMENT`
+- Unevidenced claims must say `NOT VERIFIED` and state what was looked for
+- **Silence is risk, not neutrality** — an unanswered question scores as exposure, not N/A
+- One fixed deliverable order: Scope → Data flow → Findings → Residual risk → Verdict → Conditions → Open items → Owner
+- One verdict vocabulary: `APPROVE` / `APPROVE WITH CONDITIONS` / `REJECT` — no "conditionally approve", no "approve pending"
+
+That last rule looks trivial and isn't. Verdict vocabulary drift is exactly how a set of reviews stops being comparable.
+
+---
+
+## 🧠 Key Learnings
+
+**1. My bottleneck was never prompt quality. It was prompt variance.**
+I had assumed I wanted better prompts. What I actually needed was *the same* prompt — with a frozen spine and only the inputs changing. A stored prompt still gets re-improvised each time you paste it. A prepended rules layer cannot be.
+
+**2. Building blocks beat a prompt library, and the reason is consistency, not volume.**
+The obvious argument for blocks is combinatorial: 9 blocks × 6 options is ~30 million combinations versus 19 stored prompts. But the real gain is that every prompt I assemble reuses the *same* Constraints and Quality-checks wording. Two reviews built from blocks are consistent by construction. Two reviews built from remembered prompts are consistent by luck.
+
+**3. Every block needs a visible "why", and I was the one who needed it.**
+The brief required each block to explain itself in both the picker and the assembled state. I expected that to be for other people. Writing the explanation for **Quality checks** — *"cheapest possible defence against the failure that actually costs you: a confident, well-formatted, wrong finding"* — is what made me realise I'd been skipping that block on exactly the reviews where it mattered most.
+
+**4. A loop without stop conditions isn't autonomous, it's runaway — so the app inserts defaults.**
+If you build a loop and omit stop conditions or safety rules, the generated prompt injects conservative ones and the UI tells you it did. The safety default is the important half: *never fabricate a citation to close a gap; never change a verdict to improve your own score.* Optimisation pressure is precisely when fabrication becomes tempting, and a self-grading loop applies optimisation pressure by design.
+
+**5. Dropdowns are a governance control, not a UX nicety.**
+The brief says use dropdowns to reduce user workload. In this domain they do something else: constrain the vocabulary. If severity, verdict and gap type can only be picked from fixed lists, they can't drift across reviews. Free text is where consistency goes to die — which is why there are 305 curated options and free text only as an explicit override.
+
+**6. The "worked example" field turned out to be the most valuable part of each workflow.**
+Not the template — the note about what happened when I actually ran it. *"The Repudiation row was the one that mattered, and it's the row I habitually under-weight."* Templates are reproducible from first principles; that observation isn't.
+
+**7. Writing this file was itself a red-team of my own practice.**
+Forcing every workflow to declare its purpose in one plain sentence exposed two I couldn't justify, and they got cut. If you can't say what a workflow is for without jargon, you don't have a workflow — you have a habit.
+
+---
+
+## 🧪 How I Verified It
+
+Rather than eyeballing it, I tested it:
+
+- **Structural** — zero external resource references, no `fetch`/`XHR`/CDN/`@import`; both inline scripts syntax-checked; `localStorage` reads and writes confirmed inside `try/catch` with an in-memory fallback and a visible warning when the browser blocks storage.
+- **Requirements** — all 9 named prompt blocks and all 5 loop blocks present; each block's explanation confirmed rendered in *both* the picker and the assembled block; persistent explainer + permanent "What is this?" affordance present; dismissal user-controlled and persisted; nav labels checked against a jargon blocklist (`hub`, `deck`, `forge`, `nexus`, `command`).
+- **Content** — all 19 workflows checked for unique ID, valid category, substantive purpose/template/example, ≥3 best practices, and **bidirectional variable integrity**: every `{{VAR}}` in a template has a definition, and every definition is used. Caught two orphaned variables.
+- **Logic** — 11 assertions on the composition functions: house rules prepend correctly and vanish when toggled off, custom text overrides the dropdown without leaking the dropdown value, empty blocks are skipped, block order is preserved, loop safety defaults inject only when the user hasn't supplied their own.
+- **DOM wiring** — all **62** `#id` references resolved against the markup; all 20 `data-*` hooks confirmed present. Zero missing, zero orphaned — this is the check that catches a silent crash on boot.
+- **Round-trip** — `workflow-library.json` exported and re-parsed to confirm the import path works.
+
+Two real bugs found and fixed this way: two source-reference indices pointing past the end of the array, and orphaned template variables.
+
+---
+
+## ⚠️ Honest Limits
+
+- Data lives in one browser on one device. `workflow-library.json` is the only durable copy — export after any meaningful edit.
+- The house rules are *my* standards. Anyone reusing this file should replace them; inheriting someone else's scoring bands is worse than having none.
+- 19 workflows is a starting library, not a finished one. The point is the block system underneath it.
+- The consistency layer constrains phrasing and structure. It cannot make a wrong finding right — that's what the Quality checks block and the red-team workflow are for.
+
+---
+
+## 🛠️ Files in This Folder
+
+| File | What it is |
+|---|---|
+| `personal-ai-playbook.html` | The app. Open in any browser; no build step, no network. |
+| `workflow-library.json` | Exported starter library — 19 workflows + 8 house rules. Restore via Backup & Import. |
+| `build/` | Build sources (`shell.html`, `data.js`, `app.js`) concatenated into the single file. |
+| `day49.md` | This writeup. |
+| `screenshots/` | Dashboard, workflow expanded with variables filled, Prompt Builder mid-assembly, Loop Builder preview, House Rules. |
+
+---
+
+## 📣 LinkedIn Post
+
+> Day 49 of 60. The prompt asked me to turn my AI habits into reusable workflow systems. The interview step asked what my actual bottleneck is, and my answer surprised me:
+>
+> **It was never that writing prompts is slow. It's that review #7 and review #21 don't score the same way.**
+>
+> When you've done 20+ AI connector security reviews, the hard problem isn't any single review. It's that the set gets audited as a body of work — and if your severity bands drifted, or you wrote "conditionally approve" in one and "approve with conditions" in another, the inconsistency becomes the finding.
+>
+> So I didn't build a prompt library. I built a **consistency layer**.
+>
+> One section of the app holds my fixed standards, and they get prepended to every prompt I assemble:
+> → Frozen risk bands. Never invented, never half-banded.
+> → Every sentence labelled SOURCED FACT or ANALYST JUDGEMENT.
+> → Unevidenced claims must say NOT VERIFIED and state what was looked for.
+> → **Silence is risk, not neutrality.** An unanswered question scores as exposure, not N/A.
+> → One verdict vocabulary: APPROVE / APPROVE WITH CONDITIONS / REJECT. Nothing else.
+>
+> That last one looks trivial. It isn't. Verdict vocabulary drift is exactly how a set of reviews quietly stops being comparable.
+>
+> Three things I learned building it:
+>
+> **Building blocks beat a prompt list — but not for the reason people say.** Yes, 9 blocks × 6 options is ~30 million combinations versus 19 stored prompts. The actual gain is that every prompt reuses the *same* constraints wording. Two reviews built from blocks are consistent by construction. Two built from remembered prompts are consistent by luck.
+>
+> **Dropdowns are a governance control, not a UX nicety.** If severity and verdict can only be picked from fixed lists, they can't drift. Free text is where consistency goes to die. 305 curated options; free text only as an explicit override.
+>
+> **A self-grading loop applies optimisation pressure by design — so it needs safety rules by design.** Build a loop without them and my app injects defaults: never fabricate a citation to close a gap, never change a verdict to improve your own score. Optimisation pressure is precisely when fabrication becomes tempting.
+>
+> Then I tested it instead of eyeballing it: 62 DOM bindings verified, bidirectional variable integrity across all 19 workflows, 11 assertions on the prompt composition logic. Found two real bugs.
+>
+> Single self-contained HTML file. No libraries, no network calls, runs offline.
+>
+> @Anthropic @ABTalksOnAI @AnilBajpai
+>
+> \#60DayClaudeChallenge #AIGovernance #ResponsibleAI #PromptEngineering #AISecurity
+
+---
+
+*Part of my VP AI Governance roadmap | ABTalks 60-Day Claude Challenge*
+[GitHub](https://github.com/vkktask/60-day-claude-challeng) · [LinkedIn](https://www.linkedin.com/in/vivekdp/)
