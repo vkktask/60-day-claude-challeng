@@ -1,0 +1,74 @@
+# Day 50 — Build: Defend Your Experience
+
+**Challenge:** ABTalks Claude Challenge · Day 50 · AI Career Intelligence
+**Task:** Create an AI-Powered Adaptive Interview Defense Simulator
+**Difficulty:** Advanced · ~120 min
+**Author:** Vivek Kumar
+
+---
+
+## What I built
+
+A single self-contained HTML application that treats a résumé as a set of **claims to be defended** rather than a document to be improved.
+
+You drop in a résumé, LinkedIn About section, project write-up or performance review. The app:
+
+1. **Extracts every individually defensible claim** — scope, ownership, metrics, authority, outcome — and ranks them most-attackable first, with the sharpest doubt an interviewer would raise attached to each.
+2. **Interrogates one claim at a time** as a technical deep-dive interviewer. Every answer is read, scored, and used to generate the *next* question. It goes one level deeper each round: mechanism → measurement → ownership → tradeoff → failure mode. If you dodge, it names the dodge.
+3. **Tracks confidence per claim** on a 0–100 scale, rolled up into a single **Defense Integrity** figure. Untested claims count as zero — the metric measures defence actually demonstrated, not potential.
+4. **Produces a Defense Report** — an unsentimental interviewer debrief, a weakest-first claim ledger, and one concrete fix per line, exportable as Markdown.
+
+The interviewer persona is deliberately **hard to impress**. Scores above 80 require specifics a liar could not invent.
+
+## Live version
+
+Published as a Claude artifact with the `sample` runtime capability, so the adaptive questioning is powered by a real model call per turn rather than a canned question bank:
+
+> `https://claude.ai/code/artifact/f47dfdb5-6335-4e79-b7a0-9d4feb4f34b2`
+
+## Running it locally
+
+Open `defend-your-experience.html` in any browser. No build step, no server, no API key, no backend — one file.
+
+Outside the Claude artifact runtime the app detects that `window.claude` is absent and drops into **Local Drill Mode**: claim extraction runs on heuristics (numeric density, hedge-word detection, first-person ownership, mechanism markers) and questions come from a built-in probe bank keyed to claim category. Every feature still works — the scoring is rules-based instead of model-based. The status chip in the header tells you which mode you are in.
+
+## Architecture
+
+| Layer | Approach |
+| --- | --- |
+| Runtime | Vanilla HTML + CSS + JS, single file, zero dependencies |
+| Model access | `claude.use("sample")` → `sample.json()` for structured verdicts, `sample()` for the prose debrief |
+| Claim extraction | One `sample.json` call returning `{claim, category, attack, evidence_needed}[]`, cached 15 min |
+| Interrogation loop | Per-claim turn array replayed as `sample.json` messages, `cache: false`, `AbortController` per call |
+| Scoring | Weighted blend — new verdict 65%, running score 35% — so one strong answer cannot erase a weak history |
+| Degradation | Every model call has a heuristic fallback; `not_granted` / `sampling_disabled` silently switch modes mid-session |
+| Persistence | `localStorage`, wrapped in try/catch so blocked storage never breaks the page |
+| Export | `claude.use("downloads")` when available, clipboard + visible Markdown block otherwise |
+
+### Design
+
+Dark cinematic console. Chakra Petch for display, IBM Plex Sans for body, IBM Plex Mono for data readouts. Teal-cyan accent against a blue-biased charcoal, with a semantic three-colour state system (`held` / `shaky` / `exposed`) kept separate from the accent hue so status reads at a glance without competing with the interface. Claim ledger on the left as a scannable stripe list, transcript on the right — the layout of an operations console, not a chat app.
+
+## Key learnings
+
+**1. The framing is the whole product.** "Review my résumé" and "defend your résumé" produce completely different applications from nearly the same input. A reviewer optimises the document; an adversary optimises *you*. Once the prompt establishes that every sentence is a claim under test, the model stops being agreeable — and that is exactly what makes the practice useful.
+
+**2. Structured output is what makes a conversation adaptive.** Returning free prose gives you a chatbot. Returning `{score, note, gap, next, fix}` gives you a state machine: the score drives the meter, the gap accumulates into the report, and `next` becomes the following question. The JSON contract is where "adaptive" actually lives.
+
+**3. Scoring must be stingy or the whole exercise collapses.** The first version handed out 70s for anything articulate. Adding "80+ only for an answer with specifics a liar could not invent" to the judge instructions changed the distribution completely — and made the Defense Integrity number mean something.
+
+**4. Build the offline path first, not last.** Designing the heuristic drill mode up front forced clear thinking about what each model call was actually *for*. It also means the deliverable is a genuinely standalone HTML file rather than a shell that only works inside one runtime.
+
+**5. Weighted scoring beats last-answer-wins.** Blending each new verdict with the running score at 65/35 stops a single rehearsed answer from redeeming a claim that fell apart twice. Interview confidence is cumulative; the metric should be too.
+
+**6. Untested is not neutral.** Counting untested claims as zero in the integrity roll-up was a deliberate choice. A résumé line nobody has pressured you on is not a strength — it is an unknown, and unknowns are what sink interviews.
+
+## Files
+
+```
+Day50/
+├── day50.md                      this file
+├── prompt-used.md                the exact prompt template
+├── defend-your-experience.html   the application (standalone, single file)
+└── screenshots/                  interface, interrogation, defense report
+```
