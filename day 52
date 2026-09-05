@@ -1,0 +1,99 @@
+# Day 52 — System Design
+
+**Challenge:** ABTalks Claude Challenge · Day 52 · Capstone Project, Day 2 of 10
+**Task:** Turn yesterday's plan into a technical blueprint
+**Difficulty:** Advanced · ~60 min
+**Author:** Vivek Kumar
+
+---
+
+## Project
+
+**Aegis — AI Connector Governance Platform.** A workbench that takes a GenAI connector request from intake to an audit-ready decision record: structured eight-domain risk scoring, AI-assisted draft assessment, human-confirmed findings mapped to OWASP LLM Top 10 / STRIDE / NIST AI RMF / ISO 42001, and an immutable decision trail.
+
+The problem it addresses is real and current: enterprises are enabling connectors — ChatGPT to Drive, Claude to Slack, Zoom AI to everything — faster than security can review them, and the reviews that do happen are inconsistent, slow, and leave no defensible record.
+
+## Provenance note
+
+The Day 51 documents were not available in this session, so `PRD.md` and `IMPLEMENTATION-BLUEPRINT.md` in this folder were reconstructed before the design work began. They are a real, buildable foundation, and every Day 52 document traces back to them — but they are not a copy of a prior Day 51 output. If the original PRD differs, replace it and the design should be re-derived against it.
+
+## What was produced
+
+| Document | Contents |
+| --- | --- |
+| `PRD.md` | Problem, users, ten user stories, eight-domain risk model, the AI boundary, non-goals |
+| `ARCHITECTURE.md` | Tech stack with per-choice justification and rejected alternatives, Mermaid component diagram, data flow, two request lifecycles, AI interaction contract, external services |
+| `SCHEMA.md` | Twelve tables, ER diagram, constraints, three database-enforced rules, RLS matrix, validation against all ten stories |
+| `API.md` | Eighteen v1.0 endpoints — purpose, request, response, validation, auth, error cases |
+| `UI-WIREFRAMES.md` | User flow, nine screens with low-fi wireframes, navigation, state matrix, accessibility |
+| `PROJECT-STRUCTURE.md` | Full folder tree, responsibility per folder, where future code goes |
+| `IMPLEMENTATION-BLUEPRINT.md` | v1.1 — updated day plan, build order rationale, risks, definition of done |
+
+No production code was written today, per the task.
+
+## Stack, in one table
+
+| Layer | Choice | One-line reason |
+| --- | --- | --- |
+| Frontend | Next.js 15 App Router + TypeScript + Tailwind | Server Components render the joined queue query server-side; TS is non-negotiable for scoring |
+| Backend | Next.js Route Handlers | 18 endpoints do not justify a second service on an eight-day build |
+| Database | Supabase Postgres | Native RLS — the only way to satisfy US-9 at the database rather than the UI |
+| Auth | Supabase Auth | Same provider as the DB, so `auth.uid()` works inside RLS with no glue |
+| AI | Claude Sonnet 5 | One stateless call, schema-validated JSON out, server-side only |
+| Hosting | Vercel | Native target, preview per PR, free tier |
+
+## Three decisions worth defending
+
+**1. The decision gate is a database trigger, not a React guard.**
+
+A `decisions` row cannot be inserted while any finding on that review is `ai_generated = true` and unconfirmed. Postgres raises the exception; the API surfaces it as a 409; the UI mirrors it as a disabled button. A reviewer physically cannot approve a connector on the strength of findings no human has read.
+
+This is the product's thesis expressed as a constraint. A governance tool that let model output pass as human judgment would fail its own review.
+
+**2. Risk scores are generated columns.**
+
+`inherent` is `GENERATED ALWAYS AS (likelihood * impact) STORED`, and a check constraint enforces `residual_likelihood <= likelihood`. No client can submit a product inconsistent with its factors, and a control can never make risk worse. An entire class of scoring bug is eliminated at the schema level rather than defended against in application code.
+
+**3. The AI is an accelerant, not a dependency.**
+
+If the Anthropic API is unreachable, the assessment endpoint returns 502 and the reviewer works through the eight domains by hand. The UI has a "Continue manually" button next to "Retry." A control process whose availability depends on a third-party model has made that model a single point of failure for the control — which is precisely the finding Aegis would write about someone else's architecture.
+
+## Day 3 readiness check
+
+**Can it be built in the remaining eight days?** Yes. The day plan in the Blueprint assigns each user story to a named day, with Day 59 shaped as buffer. The riskiest component — streaming an AI call inside a serverless timeout and schema-validating the output — is scheduled for Day 56, leaving four days to fall back to a manual-only workbench that still satisfies eight of ten stories.
+
+**Has scope crept?** No. Nothing was added today. One item was *reduced*: evidence file upload moves from Day 57 to "if Day 59 has room," because it serves no user story directly. The schema and endpoint stay designed so adding it later costs an afternoon.
+
+**Can Day 53 begin implementation immediately?** Yes. Day 53 is repo setup, migrations, RLS policies, seed, auth, deploy — every one of those has a specification in this folder. No design questions remain open.
+
+## Key learnings
+
+**1. A user-story-to-table matrix catches dead schema before it exists.** Writing the validation table in `SCHEMA.md` forced a check in both directions: no table without a story, no story without a table. Two speculative tables were deleted during that pass — they existed because they felt architecturally tidy, not because anything needed them.
+
+**2. Deciding where a rule is *enforced* is a design decision, not an implementation detail.** The same rule — "no decision with unconfirmed AI findings" — is a nuisance in React, a real control in Postgres, and a documented guarantee in the API contract. Choosing the layer determined whether the product has a control or a suggestion.
+
+**3. Writing the rejected alternatives is what makes the stack defensible.** "Next.js because it's good" is not a justification. "Route Handlers over a separate FastAPI service because 18 endpoints don't justify a second deploy surface on an eight-day solo build, and here is the condition under which that flips" is one — and it is the version that survives a design review.
+
+**4. Designing the failure state is what forced the right architecture.** The question "what happens when the model is down?" is what turned the AI from a dependency into an accelerant. That single question changed the request lifecycle, added a UI state, and produced the strongest line in the whole design.
+
+**5. Low-fidelity wireframes surface authorization bugs early.** Sketching the requester's `/my-requests` screen made it obvious that a requester must not see `findings` — which became an RLS policy rather than a UI omission. The wireframe found a security requirement.
+
+## Files
+
+```
+Day52/
+├── day52.md                       this file
+├── PRD.md                         reconstructed Day 51 foundation
+├── IMPLEMENTATION-BLUEPRINT.md    v1.1, updated today
+├── ARCHITECTURE.md
+├── SCHEMA.md
+├── API.md
+├── UI-WIREFRAMES.md
+├── PROJECT-STRUCTURE.md
+└── linkedin-post.md
+```
+
+## Links
+
+- Project repo commit: _pending — see the note in the challenge submission_
+- Challenge repo: `github.com/vkktask/60-day-claude-challeng`
