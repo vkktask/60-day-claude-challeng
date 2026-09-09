@@ -1,0 +1,219 @@
+# Day 53 — Agentic AI Threat Model: STRIDE × OWASP ASI Top 10
+
+**Challenge:** ABTalks 60-Day Claude AI Challenge
+**Author:** [Vivek DP](https://www.linkedin.com/in/vivekdp/)
+**Date:** Day 53 of 60
+**Track:** AI Governance / Responsible AI — VP Roadmap
+
+---
+
+## 🎯 Day 53 Objective
+
+Build a **production-usable threat model for autonomous AI agents** — the class of system that plans across steps, holds memory, carries delegated credentials, calls tools, and talks to other agents.
+
+The LLM Top 10 assumes the model *answers*. This threat model assumes the model *acts*. That single shift changes the blast radius from "a bad response" to "a chain of authenticated actions against production systems."
+
+Deliverable: reference architecture → trust boundaries → STRIDE decomposition → ASI01–ASI10 control matrix → AI-amplified kill chain → a pre-deployment governance gate a review board can actually run.
+
+---
+
+## 🏗️ 1. Reference Architecture Under Analysis
+
+A representative enterprise agentic deployment — the pattern behind most copilots, RPA replacements, and internal "do the whole workflow" agents:
+
+```
+                    ┌──────────────────────────────────────────────┐
+   TB-1             │              HUMAN PRINCIPAL                 │
+  ────────          │        (delegates authority + approves)      │
+                    └───────────────────┬──────────────────────────┘
+                                        │  OAuth / delegated identity
+                    ┌───────────────────▼──────────────────────────┐
+   TB-2             │            ORCHESTRATOR / PLANNER            │
+  ────────          │   goal decomposition • routing • budgets     │
+                    └──┬──────────────┬──────────────┬─────────────┘
+                       │              │              │
+        ┌──────────────▼───┐  ┌───────▼───────┐  ┌───▼────────────┐
+   TB-3 │  MODEL RUNTIME   │  │  MEMORY LAYER │  │  TOOL LAYER    │
+  ──────│  (LLM inference) │  │ RAG • vectors │  │ MCP • APIs     │
+        │                  │  │ session state │  │ shell • DB     │
+        └──────────────────┘  └───────┬───────┘  └───┬────────────┘
+                                      │              │
+   TB-4        ┌─────────────────────▼──────────────▼─────────────┐
+  ────────     │   UNTRUSTED INGESTION + DOWNSTREAM SYSTEMS       │
+               │  documents • email • web • tickets • prod data   │
+               └──────────────────────┬───────────────────────────┘
+                                      │
+   TB-5        ┌─────────────────────▼───────────────────────────┐
+  ────────     │        PEER AGENTS (A2A / multi-agent mesh)     │
+               └────────────────────────────────────────────────┘
+```
+
+### Trust boundaries
+
+| ID | Boundary | Why it is a boundary | Primary failure mode |
+|----|----------|----------------------|----------------------|
+| **TB-1** | Human → Agent | Authority is delegated but *not* re-verified per action | Over-delegation; consent laundering |
+| **TB-2** | Planner → Executor | Plans are natural language; NL is not an authorization artifact | Goal drift executed with valid creds |
+| **TB-3** | Agent → Tool / Memory | Tool descriptors and memory writes are treated as trusted | Poisoned descriptor / poisoned recall |
+| **TB-4** | Agent → Untrusted content | Retrieved content enters the same context as instructions | Indirect prompt injection |
+| **TB-5** | Agent → Agent | Peer identity is often asserted, not proven | Spoofed agent, transitive privilege |
+
+> **Core modelling principle:** in an agentic system the *context window is a privilege boundary*. Anything that reaches it can influence action. Model it like an untrusted input channel with execution rights, because that is what it is.
+
+---
+
+## 🔐 2. STRIDE Decomposition by Component
+
+| Component | **S**poofing | **T**ampering | **R**epudiation | **I**nfo Disclosure | **D**oS | **E**oP |
+|-----------|---|---|---|---|---|---|
+| **Orchestrator / Planner** | Fake task source injects goals | Plan rewritten mid-execution | No signed plan lineage | Plan text leaks internal topology | Planning loops burn budget | Planner assumes union of all tool scopes |
+| **Model Runtime** | Model substitution / unpinned version | Prompt & system-prompt tampering | Non-deterministic output, no attestation | Training/context leakage | Token exhaustion | Jailbreak unlocks restricted behaviour |
+| **Memory / RAG** | Poisoned doc masquerades as authoritative | Vector index poisoning | Memory writes unattributed | Cross-tenant recall | Index flooding | Poisoned memory grants standing instructions |
+| **Tool Layer / MCP** | Rogue MCP server impersonates trusted one | Tool descriptor rewritten | Tool calls logged without agent identity | Over-broad reads exfiltrate | Rate-limit exhaustion | Tool chaining composes an unapproved capability |
+| **Agent Identity** | Credential reuse across sessions | Token replay | Shared service account = no attribution | Cached creds readable | Auth service flood | Delegation chain escalates silently |
+| **A2A Channel** | Unauthenticated peer registration | Message mutation in transit | No message signing | Plaintext inter-agent traffic | Message storm | Peer inherits caller's privileges |
+| **Human Interface** | Fake copilot UI | Rationale text manipulated | "The agent decided" — accountability gap | Over-disclosure in explanations | Approval fatigue | Trust exploitation → human executes the attack |
+
+---
+
+## 🎯 3. ASI01–ASI10 Control Matrix
+
+Mapping the [OWASP Top 10 for Agentic Applications 2026](https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/) to trust boundaries, STRIDE, ATT&CK-style technique classes, and the control that actually reduces the risk (not the one that documents it).
+
+| ID | Risk | TB | STRIDE | Adversary technique class | Primary control (the one that matters) | Residual owner |
+|----|------|----|--------|---------------------------|----------------------------------------|----------------|
+| **ASI01** | Agent Goal Hijack | TB-4, TB-2 | T, E | Indirect prompt injection via retrieved content | **Provenance-tagged context** — mark every span trusted/untrusted; untrusted spans cannot originate tool calls | Product Sec |
+| **ASI02** | Tool Misuse & Exploitation | TB-3 | T, E | Living-off-the-land with granted tools | **Per-tool scoping + argument semantics validation**; destructive verbs require step-up | Platform Eng |
+| **ASI03** | Identity & Privilege Abuse | TB-1, TB-5 | S, E | Delegation chain abuse, credential reuse | **Unique bounded agent identity, short-lived creds, no credential passthrough to sub-agents** | IAM |
+| **ASI04** | Agentic Supply Chain | TB-3 | S, T | Malicious plugin / typosquatted MCP server | **Signed manifests + AIBOM + registry allowlist**; no runtime discovery of unsigned tools | AppSec / SCM |
+| **ASI05** | Unexpected Code Execution | TB-3 | T, E | Generated code executed in-context | **Hard split between generation and execution**; non-root sandbox, no egress by default | Platform Eng |
+| **ASI06** | Memory & Context Poisoning | TB-3, TB-4 | T, I | Persistence via long-term memory | **Write-time validation, provenance scoring, TTL decay, no auto-reingestion of agent output** | Data Gov |
+| **ASI07** | Insecure Inter-Agent Comms | TB-5 | S, T, I | Spoof / replay / MITM on A2A | **mTLS + signed messages with nonce + schema validation**; authenticated discovery only | Platform Eng |
+| **ASI08** | Cascading Failures | TB-2, TB-5 | D | Fault amplification across agent mesh | **Blast-radius caps, circuit breakers, task-scoped one-time creds, replay testing in a digital twin** | SRE + Risk |
+| **ASI09** | Human-Agent Trust Exploitation | TB-1 | S, R | Social engineering *through* a trusted agent | **Risk-badged UI, multi-step approval for irreversible actions, immutable rationale log** | Risk + UX |
+| **ASI10** | Rogue Agents | TB-2, TB-5 | R, E | Behavioural drift, reward hacking, persistence | **Signed behavioural manifest + watchdog monitoring + kill switch with credential revocation** | AI Governance |
+
+---
+
+## ⛓️ 4. AI-Amplified Kill Chain
+
+How these compose. A single untrusted document becomes a multi-system compromise in six moves — none of which trip a traditional control, because every step uses valid credentials performing permitted operations.
+
+| Stage | Classic equivalent | Agentic realisation | ASI | Detection signal |
+|-------|--------------------|---------------------|-----|------------------|
+| **1. Delivery** | Phishing email | Instruction embedded in a doc/ticket/calendar invite the agent is *supposed* to read | ASI01 | Untrusted-span → tool-call correlation |
+| **2. Execution** | Macro runs | Agent adopts the injected sub-goal as legitimate planning | ASI01, ASI05 | Goal-drift delta vs. signed task manifest |
+| **3. Persistence** | Registry key | Instruction written into long-term memory / RAG index | ASI06 | Memory write from low-provenance source |
+| **4. Privilege Escalation** | Token theft | Sub-agent spawned inheriting the parent's delegated scope | ASI03 | Transitive entitlement expansion |
+| **5. Lateral Movement** | SMB pivot | Task delegated across the A2A mesh; each hop looks authorised | ASI07, ASI10 | Unexpected peer routing / new edge in agent graph |
+| **6. Exfiltration / Impact** | Data staged & shipped | Legitimate tool (email, storage sync, API) used for egress | ASI02 | Volume/entropy anomaly on approved tool |
+
+**The governance point:** every stage is *authorised*. Detection cannot rely on "unauthorised access." It has to rely on **intent deviation** — the gap between the signed task manifest and observed behaviour. That is a new telemetry requirement, and most enterprises do not have it today.
+
+---
+
+## ✅ 5. Pre-Deployment Governance Gate
+
+A review board checklist. Every item is binary and evidence-backed — no "in progress" as a passing state.
+
+**Identity & Authorisation**
+- [ ] Agent has a unique, non-human identity — not a shared service account
+- [ ] Credentials are short-lived and task-scoped; no static secrets in config
+- [ ] Sub-agents receive fresh, narrower credentials — never the parent's token
+- [ ] Delegation depth is capped and enforced at runtime
+
+**Tools & Execution**
+- [ ] Tool inventory is explicit, versioned, and least-privilege scoped
+- [ ] Destructive / irreversible actions enumerated and gated behind human approval
+- [ ] Code generation and code execution are separated by a validation gate
+- [ ] Execution sandbox is non-root, network-egress-denied by default
+
+**Context & Memory**
+- [ ] Untrusted content is provenance-tagged and cannot originate tool invocations
+- [ ] Memory writes are validated, attributed, and expire on a defined TTL
+- [ ] Memory is segmented by user/tenant/task — cross-contamination tested
+- [ ] Rollback/snapshot capability exists for suspected poisoning
+
+**Supply Chain**
+- [ ] AIBOM exists: models, prompts, tools, MCP servers, datasets, versions pinned
+- [ ] All tool descriptors and manifests are signed and verified at load
+- [ ] No runtime discovery from unauthenticated registries
+
+**Containment & Oversight**
+- [ ] Blast-radius caps and circuit breakers defined per workflow
+- [ ] Kill switch tested end-to-end, including credential revocation propagation
+- [ ] Tamper-evident logs capture: goal, plan, tool call, arguments, rationale, identity
+- [ ] Behavioural baseline established; drift alerting live before go-live
+
+**Governance**
+- [ ] AI impact assessment completed (ISO 42001 Cl. 6.1.2)
+- [ ] Accountable human owner named — not a team, a person
+- [ ] Risk tier assigned; EU AI Act high-risk determination documented
+- [ ] Incident runbook covers agent-specific scenarios (rogue agent, memory poisoning, cascade)
+
+---
+
+## 🔁 6. Framework Crosswalk
+
+Where each ASI risk lands in the compliance regimes a board will actually ask about:
+
+| ASI risk | ISO/IEC 42001:2023 | NIST AI RMF | EU AI Act | ISO 27001:2022 |
+|----------|--------------------|-------------|-----------|----------------|
+| ASI01 Goal Hijack | Cl. 6.1.2 impact assessment; A.6 lifecycle | MEASURE 2.7 | Art. 15 accuracy & robustness | A.8.26 app security |
+| ASI02 Tool Misuse | A.9 AI system use | GOVERN 1.3 | Art. 14 human oversight | A.8.2 privileged access |
+| ASI03 Identity Abuse | A.4 resources & roles | GOVERN 2.1 | Art. 14 | A.5.15–5.18 access control |
+| ASI04 Supply Chain | A.10 third-party & supplier | MAP 4.1 | Art. 25 value-chain duties | A.5.19–5.21 supplier |
+| ASI05 Code Execution | A.6.2.4 verification | MANAGE 2.2 | Art. 15 | A.8.28 secure coding |
+| ASI06 Memory Poisoning | A.7 data for AI systems | MAP 2.3, MEASURE 2.8 | Art. 10 data governance | A.5.12 classification |
+| ASI07 Inter-Agent Comms | A.6.2.6 operation | MANAGE 4.1 | Art. 15 | A.8.20–8.24 network & crypto |
+| ASI08 Cascading Failures | Cl. 8 operational planning | MANAGE 2.4 | Art. 9 risk management | A.5.29–5.30 continuity |
+| ASI09 Trust Exploitation | A.8 information for interested parties | GOVERN 5.1 | Art. 13 transparency; Art. 50 | A.6.3 awareness |
+| ASI10 Rogue Agents | Cl. 9 monitoring; Cl. 10 improvement | MEASURE 3.1, MANAGE 4.3 | Art. 12 logging; Art. 72 post-market | A.5.7 threat intel; A.8.16 monitoring |
+
+---
+
+## 🧠 Key Takeaways
+
+1. **Authorisation, not authentication, is the failure mode.** Agentic compromise almost never looks like unauthorised access. It looks like an authorised identity doing permitted things in an unintended order. Controls built around "who is this" don't fire.
+
+2. **The context window is a privilege boundary — treat it like one.** The most durable single control in this entire model is provenance tagging: untrusted spans may inform reasoning but may not originate tool calls. Almost nobody implements it. It collapses ASI01 and half of ASI06.
+
+3. **Memory is the persistence layer of the agentic kill chain.** Traditional threat models have no analogue for "the attacker's instruction becomes part of the system's beliefs." TTL, provenance decay, and no-auto-reingestion are cheap and materially reduce dwell time.
+
+4. **Multi-agent meshes convert local faults into systemic ones.** ASI08 is where AI risk stops being a security concern and becomes an operational resilience concern — which is exactly the framing that gets it funded.
+
+5. **Governance leverage sits at the gate, not the audit.** Sixteen binary pre-deployment checks prevent more harm than any post-hoc review. The board question to ask is not "is the agent safe" but "what is its maximum blast radius in one hour with no human intervention."
+
+---
+
+## 🛠️ Tools Used
+
+- Claude (threat model construction, control mapping, framework crosswalk)
+- OWASP Top 10 for Agentic Applications 2026 (ASI01–ASI10)
+- OWASP Agentic Security Initiative — Threats & Mitigations (T1–T15), MAESTRO
+- STRIDE (Microsoft SDL threat modelling)
+- ISO/IEC 42001:2023, ISO/IEC 27001:2022, NIST AI RMF 1.0, EU AI Act
+
+---
+
+## 📚 Resources Referenced
+
+- [OWASP Top 10 for Agentic Applications 2026 — OWASP GenAI Security Project](https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/)
+- [OWASP Agentic Security Initiative](https://genai.owasp.org/initiatives/agentic-security-initiative/)
+- [Agentic AI — Threats and Mitigations (T1–T15)](https://genai.owasp.org/resource/agentic-ai-threats-and-mitigations/)
+- [OWASP GenAI LLM Top 10 2026](https://genai.owasp.org/resource/owasp-genai-llm-top-10-2026/)
+- [Agent Control Standard (ACS)](https://genai.owasp.org/resource/agent-control-standard-acs/)
+- [GenAI Security Industry Framework Crosswalk](https://genai.owasp.org/resource/genai-security-industry-framework-crosswalk/)
+- [ISO/IEC 42001:2023](https://www.iso.org/standard/81230.html)
+- [NIST AI Resource Center](https://airc.nist.gov/)
+
+---
+
+## 🔗 Connect
+
+- LinkedIn: [Vivek DP](https://www.linkedin.com/in/vivekdp/)
+- GitHub: [vkktask/60-day-claude-challeng](https://github.com/vkktask/60-day-claude-challeng)
+
+---
+
+*Part of the VP AI Governance Roadmap | ABTalks 60-Day Claude Challenge — Day 53 of 60*
