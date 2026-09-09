@@ -1,0 +1,376 @@
+# Day 54 — From Threat Model to Runtime Enforcement: Mapping OWASP ACS to the ASI Top 10
+
+**Challenge:** ABTalks 60-Day Claude AI Challenge
+**Author:** [Vivek DP](https://www.linkedin.com/in/vivekdp/)
+**Date:** Day 54 of 60
+**Track:** AI Governance / Responsible AI — VP Roadmap
+**Builds on:** [Day 53 — Agentic AI Threat Model (STRIDE × ASI Top 10)](../Day53)
+
+---
+
+## 🎯 Day 54 Objective
+
+Day 53 produced a threat model. A threat model that stops at a control matrix is a document. This is the other half: **where each control actually gets enforced, on which hook, with what verdict.**
+
+OWASP's [Agent Control Standard (ACS)](https://genai.owasp.org/resource/agent-control-standard-acs/) — moved under the GenAI Security Project in September 2026 — is the missing implementation layer. Every governance framework agrees on *what* is required (runtime visibility, intervention capability, auditable controls). None of them specifies *how*. ACS does.
+
+Deliverable: ACS primer → hook inventory → ASI01–ASI10 enforcement mapping → declarative policy pack → telemetry spec → AgBOM baseline → honest coverage-gap analysis → phased adoption roadmap.
+
+---
+
+## 🧩 1. ACS in 90 Seconds
+
+ACS rests on a claim worth stating plainly: **agents must be inspectable, traceable, and instrumentable.** Three pillars, three specs.
+
+| Pillar | Spec | What it delivers | Built on |
+|--------|------|------------------|----------|
+| **Inspect** | AgBOM | Dynamic Agent Bill of Materials — every tool, model, capability, knowledge source, dependency. Updates in real time as agents discover new tools or modify capabilities | CycloneDX, SPDX, SWID |
+| **Trace** | Observability | Structured trace of every action, decision, reasoning step. Agent-specific semantic conventions; security events mapped for SIEM | OpenTelemetry, OCSF |
+| **Instrument** | Runtime hooks | Standardized middleware hooks at every agent decision point. A Guardian Agent intercepts, evaluates against policy, returns **allow / deny / modify** — inline, before the action reaches production | ACS schema |
+
+### The three-tier control model
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ TIER 1 — PLATFORM LAYER                                         │
+│ Agent framework exposes standardized hooks. One-time work.      │
+│ The platform does NOT implement policy. It exposes hooks.       │
+│ ── That is the entire ask. ──                                   │
+└────────────────────────────┬────────────────────────────────────┘
+                             │  hook fires with action context
+┌────────────────────────────▼────────────────────────────────────┐
+│ TIER 2 — OPEN-SOURCE ENFORCEMENT LAYER (Guardian Agent)         │
+│ Framework-agnostic SDK reads declarative policy and evaluates:  │
+│   input validation • tool-call authorization                    │
+│   output filtering • adversarial detection                      │
+│ Switching frameworks does not mean rewriting safety logic.      │
+└────────────────────────────┬────────────────────────────────────┘
+                             │  pluggable classifiers
+┌────────────────────────────▼────────────────────────────────────┐
+│ TIER 3 — ENTERPRISE CUSTOMIZATION LAYER                         │
+│ Your own detectors: PHI, PCI, data-sensitivity models,          │
+│ existing DLP/SIEM tooling. No platform change required.         │
+└────────────────────────────┬────────────────────────────────────┘
+                             │
+                    ┌────────▼────────┐
+                    │ ALLOW  DENY     │
+                    │      MODIFY     │
+                    └─────────────────┘
+```
+
+**Why this architecture matters for governance:** the enforcement point is *outside* the agent. System prompts are not controls — they are requests. Model improvements do not cover adversarial edge cases. Proprietary guardrails create lock-in. ACS makes the control plane declarative, portable, and auditable as an artifact separate from the agent it governs.
+
+---
+
+## 🪝 2. Hook Inventory — The Enforcement Surface
+
+ACS fires a hook at each agent decision point. This is the complete interception surface available to a Guardian Agent.
+
+| Hook | Fires when | Context available | What a verdict can do |
+|------|-----------|-------------------|-----------------------|
+| **Input** | Agent receives input (user or retrieved content) | Content, source, provenance | Deny ingestion; strip/rewrite spans; tag as untrusted |
+| **Output** | Agent emits a response | Response text, target audience | Redact; block; append risk labelling |
+| **Tool selection** | Agent chooses which tools to consider | Candidate tool set, task context | Narrow the tool set before reasoning even begins |
+| **Tool call** | Agent invokes a tool | Tool ID, arguments, invoking identity | Deny; rewrite arguments; require step-up approval |
+| **Tool response** | Tool returns data | Payload, size, sensitivity | Redact; cap volume; block reingestion into memory |
+| **Plan → execute transition** | Planning completes, execution begins | Signed task manifest vs. derived plan | Deny on goal drift — the single highest-value gate |
+| **Memory store** | Agent writes to memory / RAG | Content, provenance, trust score | Deny low-provenance writes; force TTL; quarantine |
+| **Code execution** | Agent runs generated code | Code, runtime, sandbox profile | Deny; force sandbox profile; strip network egress |
+| **Sub-agent invocation** | Agent spawns or delegates to a peer | Callee identity, delegated scope, depth | Cap delegation depth; narrow inherited scope; deny |
+
+> **The design insight:** these hooks map almost one-to-one onto the trust boundaries from Day 53. TB-4 (untrusted content) → Input hook. TB-2 (planner→executor) → Plan-transition hook. TB-3 (tools/memory) → Tool-call and Memory-store hooks. TB-5 (peer agents) → Sub-agent hook. The threat model tells you *where* the boundary is; ACS gives you *code that runs there*.
+
+---
+
+## 🎯 3. ASI01–ASI10 → ACS Enforcement Mapping
+
+The core deliverable. For each agentic risk: the hook that catches it, the policy that decides, the verdict that stops it, and the telemetry that proves it happened.
+
+| ASI risk | Primary hook(s) | Policy logic | Verdict | Required telemetry |
+|----------|-----------------|--------------|---------|--------------------|
+| **ASI01** Agent Goal Hijack | Input, **Plan→execute** | Provenance-tag every input span; deny plan transition when derived plan diverges from the signed task manifest beyond threshold; untrusted spans cannot originate tool calls | `deny` on drift; `modify` to strip untrusted imperatives | Manifest hash, plan diff, originating span provenance |
+| **ASI02** Tool Misuse & Exploitation | Tool selection, **Tool call** | Per-tool scope allowlist; argument semantic validation against expected types/ranges; destructive verb detection triggers step-up | `deny` unscoped; `modify` args; step-up on destructive | Tool ID, arg hash, scope decision, chain depth |
+| **ASI03** Identity & Privilege Abuse | **Sub-agent**, Tool call | Every agent has a bounded identity; sub-agents receive fresh narrower credentials — never parent token passthrough; delegation depth capped | `deny` on passthrough or depth breach | Agent identity, delegation chain, credential TTL |
+| **ASI04** Agentic Supply Chain | Tool selection, **AgBOM** | Verify signature on every tool descriptor / MCP manifest at load; registry allowlist; no runtime discovery of unsigned tools | `deny` unsigned or unpinned | AgBOM delta event, signature verification result |
+| **ASI05** Unexpected Code Execution | **Code execution** | Hard separation of generation and execution; forced sandbox profile (non-root, egress-deny); dependency pre-analysis | `deny`; `modify` to enforce sandbox profile | Code hash, sandbox profile, dependency set |
+| **ASI06** Memory & Context Poisoning | **Memory store**, Tool response | Write-time validation; provenance score threshold; mandatory TTL; block auto-reingestion of agent output into trusted memory | `deny` below trust threshold; `modify` to add TTL | Write source, provenance score, TTL, segment ID |
+| **ASI07** Insecure Inter-Agent Comms | **Sub-agent**, Tool call | mTLS required; message signature + nonce validated; schema and version enforced; authenticated discovery only | `deny` unauthenticated or replayed | Peer identity, signature status, nonce, route |
+| **ASI08** Cascading Failures | Plan→execute, Tool call, Sub-agent | Blast-radius cap per workflow; circuit breaker on error rate; task-scoped one-time credentials; loop detection | `deny` past cap; breaker trips workflow | Action count, fan-out degree, breaker state, lineage |
+| **ASI09** Human-Agent Trust Exploitation | **Output**, Tool call | Irreversible actions require multi-step human approval; output carries risk badge + confidence; rationale logged immutably | `modify` to attach risk labelling; step-up gate | Rationale text, approval chain, risk tier |
+| **ASI10** Rogue Agents | All hooks (**behavioural**) | Signed behavioural manifest; continuous verification of observed vs. declared behaviour; watchdog scoring; kill switch | `deny` all on manifest violation; revoke credentials | Behavioural baseline delta, watchdog score, kill event |
+
+**Read the pattern:** six of ten risks are stopped at exactly two hooks — **tool call** and **memory store**. If an organization can only instrument two hooks in the first quarter, those are the two. That is a genuinely actionable prioritization, and it falls out of the mapping rather than out of opinion.
+
+---
+
+## 📜 4. Declarative Policy Pack (Illustrative)
+
+ACS v0.1 is public preview, so treat the schema below as *shape, not syntax* — the point is that these controls are expressible declaratively, version-controlled, and reviewable as artifacts. That property is what makes them auditable.
+
+```yaml
+# acs-policy/core.yaml — enterprise baseline for agentic workloads
+apiVersion: acs/v0.1
+kind: ControlPolicy
+metadata:
+  name: enterprise-agent-baseline
+  risk_tier: high            # drives EU AI Act Art. 14 oversight obligations
+  owner: vivek.dp            # accountable human, not a team
+
+policies:
+
+  # ── ASI01: goal integrity ──────────────────────────────────────
+  - id: P-GOAL-01
+    hook: plan_transition
+    description: Deny execution when the derived plan diverges from the signed task manifest
+    when:
+      plan_divergence_score: { gt: 0.30 }
+    verdict: deny
+    on_deny:
+      emit: acs.security.goal_drift
+      escalate: human_review
+
+  - id: P-GOAL-02
+    hook: input
+    description: Untrusted spans may inform reasoning but may never originate tool calls
+    when:
+      span.provenance: untrusted
+    verdict: modify
+    modify:
+      set_capability: reason_only     # strips tool-invocation eligibility
+
+  # ── ASI02: tool authorization ──────────────────────────────────
+  - id: P-TOOL-01
+    hook: tool_call
+    description: Least-privilege tool scoping
+    when:
+      tool.id: { not_in: "${agent.approved_tools}" }
+    verdict: deny
+
+  - id: P-TOOL-02
+    hook: tool_call
+    description: Irreversible operations require human step-up
+    when:
+      tool.operation_class: [delete, transfer, publish, grant]
+    verdict: step_up
+    step_up:
+      approvers: 1
+      timeout: 300s
+      fail_mode: deny            # fail closed, always
+
+  # ── ASI03 / ASI07: identity and delegation ─────────────────────
+  - id: P-ID-01
+    hook: sub_agent_invoke
+    description: No credential passthrough; sub-agents get fresh narrower scope
+    when:
+      delegation.credential_reused: true
+    verdict: deny
+
+  - id: P-ID-02
+    hook: sub_agent_invoke
+    when:
+      delegation.depth: { gt: 2 }
+    verdict: deny
+
+  - id: P-ID-03
+    hook: sub_agent_invoke
+    description: Peer channels must be mutually authenticated and replay-protected
+    when:
+      any:
+        - peer.mtls_verified: false
+        - peer.message_signature_valid: false
+        - peer.nonce_seen_before: true
+    verdict: deny
+
+  # ── ASI05: code execution ──────────────────────────────────────
+  - id: P-EXEC-01
+    hook: code_execution
+    verdict: modify
+    modify:
+      sandbox:
+        user: nonroot
+        network_egress: deny
+        filesystem: ephemeral
+        cpu_seconds: 30
+
+  # ── ASI06: memory integrity ────────────────────────────────────
+  - id: P-MEM-01
+    hook: memory_store
+    description: Provenance floor for anything entering durable memory
+    when:
+      write.provenance_score: { lt: 0.70 }
+    verdict: deny
+
+  - id: P-MEM-02
+    hook: memory_store
+    description: Never auto-reingest agent output as trusted fact
+    when:
+      write.source: agent_output
+      write.target_segment: trusted
+    verdict: deny
+
+  - id: P-MEM-03
+    hook: memory_store
+    verdict: modify
+    modify:
+      ttl: 30d
+      segment_by: [tenant, user, task]
+
+  # ── ASI08: blast radius ────────────────────────────────────────
+  - id: P-BLAST-01
+    hook: tool_call
+    description: Cap unattended write operations per workflow-hour
+    when:
+      window: 1h
+      counter: write_operations
+      value: { gt: 50 }
+    verdict: deny
+    on_deny:
+      trip_circuit_breaker: true
+
+  # ── ASI09: human trust calibration ─────────────────────────────
+  - id: P-HUMAN-01
+    hook: output
+    verdict: modify
+    modify:
+      attach:
+        risk_badge: "${action.risk_tier}"
+        confidence: "${model.confidence}"
+        rationale_log_ref: "${trace.span_id}"
+
+  # ── ASI10: behavioural integrity ───────────────────────────────
+  - id: P-ROGUE-01
+    hook: "*"
+    description: Continuous verification against signed behavioural manifest
+    when:
+      behaviour.manifest_violation: true
+    verdict: deny
+    on_deny:
+      kill_switch: true
+      revoke_credentials: true
+      emit: acs.security.rogue_agent
+```
+
+**Governance property worth naming:** this file is the audit artifact. Not a policy PDF describing intent — the executable object whose diff history *is* the change log. When a regulator asks "demonstrate human oversight of your high-risk AI system," `P-TOOL-02` with `fail_mode: deny` is a better answer than a paragraph.
+
+---
+
+## 📡 5. Telemetry Specification
+
+ACS extends OpenTelemetry with agent semantic conventions and maps security events to OCSF for SIEM ingestion — deliberately contributing upstream rather than maintaining a competing trace standard. Minimum viable span attributes per hook:
+
+| Attribute | Example | Why a governance function needs it |
+|-----------|---------|-----------------------------------|
+| `acs.agent.id` | `agent://finops-recon/v3` | Attribution — the ASI03 repudiation gap |
+| `acs.agent.identity` | non-human principal ID | Proves no shared service account |
+| `acs.task.manifest_hash` | `sha256:9f2c…` | Anchor for goal-drift detection (ASI01) |
+| `acs.plan.divergence` | `0.12` | Quantified intent deviation |
+| `acs.hook.name` | `tool_call` | Which control point fired |
+| `acs.verdict` | `deny` | The enforcement decision itself |
+| `acs.policy.id` | `P-TOOL-02` | Traces the decision to a reviewable rule |
+| `acs.tool.id` / `.args_hash` | `mcp://jira/issue.delete` | Action forensics without logging payloads |
+| `acs.span.provenance` | `untrusted` | Injection-path reconstruction (ASI01/06) |
+| `acs.delegation.chain` | `[a1, a2]` | Privilege-escalation path (ASI03) |
+| `acs.blast.action_count` | `37` | Cascade containment evidence (ASI08) |
+| `acs.rationale.ref` | span pointer | Human-oversight defensibility (ASI09) |
+
+**The forensic requirement Day 53 identified was intent deviation telemetry.** `manifest_hash` + `plan.divergence` + `span.provenance` is exactly that, expressed in fields a SIEM can already alert on. This is the line where "we should monitor for goal drift" becomes a detection rule.
+
+---
+
+## 📦 6. AgBOM Baseline
+
+Static SBOMs assume the software doesn't change itself. Agents discover new tools, connect to new MCP servers, and modify their own capabilities at runtime — so the inventory has to be dynamic.
+
+Minimum viable AgBOM for a governance gate:
+
+- **Models** — provider, exact version, pinned or floating, hosting region
+- **Prompts** — system prompt hash and version lineage
+- **Tools** — every tool and MCP server, signature status, scope granted
+- **Knowledge sources** — RAG indices, datasets, classification, refresh cadence
+- **Memory stores** — type, segmentation scheme, retention/TTL
+- **Sub-agents** — peer agents callable, delegation scope, max depth
+- **Runtime** — sandbox profile, egress policy, execution limits
+- **Human owner** — a named accountable individual
+
+Every entry needs a **change event**, not just a snapshot. "Agent connected to an MCP server not present at approval time" is a governance trigger, and only a dynamic AgBOM can raise it.
+
+---
+
+## ⚠️ 7. Coverage Gap Analysis (Honest Version)
+
+ACS is the strongest available answer to runtime agent control. It is not a complete governance program. What it does *not* solve:
+
+| Gap | Why ACS doesn't close it | Where it must be closed |
+|-----|--------------------------|-------------------------|
+| **Plan-divergence scoring** | ACS gives the hook; the *semantics* of "has this plan drifted" are yours to define and tune | Enterprise Tier 3 classifier + red-team calibration |
+| **Provenance at ingestion** | ACS can act on a provenance tag; it does not manufacture one. If your retrieval layer doesn't tag, there's nothing to enforce on | Data pipeline and RAG layer — upstream of the agent |
+| **Adoption dependency** | Tier 1 requires the *platform* to expose hooks. Un-instrumented frameworks are unenforceable, full stop | Vendor requirement in procurement — make hooks a buying criterion |
+| **Fail-open defaults** | A Guardian Agent that times out and allows the action is theatre | Explicit `fail_mode: deny` in every step-up policy |
+| **Human oversight quality** | ACS can require an approval. It cannot prevent approval fatigue — which is precisely the ASI09 attack | Rate-limit approvals; batch review; UX design |
+| **Organisational accountability** | No standard assigns ownership, risk tiering, or impact assessment | ISO 42001 Cl. 6.1.2; EU AI Act Art. 9; named owner |
+| **v0.1 maturity** | Deny/modify support for MCP and A2A is roadmapped at v3, not shipped | Compensating controls at the gateway layer today |
+
+**The load-bearing caveat:** ACS moves the control plane out of the model and into inspectable infrastructure. That is a genuine architectural improvement. It does not make the hard judgment calls — what counts as drift, what is irreversible, what risk tier applies — go away. Those remain governance decisions, and they are the ones a VP actually owns.
+
+---
+
+## 🗺️ 8. Phased Adoption Roadmap
+
+| Phase | Scope | Exit criterion |
+|-------|-------|----------------|
+| **0 — Inventory** (wks 1–2) | Build AgBOM for every agent already in production. Expect to find agents nobody approved | Complete inventory with named owners |
+| **1 — Trace only** (wks 3–6) | Instrument hooks in observe mode. Emit telemetry. Enforce nothing | Baseline behavioural profile per agent; drift threshold calibrated on real data |
+| **2 — Enforce two hooks** (wks 7–12) | Turn on `deny` at **tool call** and **memory store** — six of ten ASI risks, per §3 | Zero false-deny incidents over 2 weeks; policy pack in version control |
+| **3 — Gate the plan transition** (Q2) | Goal-drift enforcement. Highest value, hardest tuning | Drift detection validated by red team, not by absence of alerts |
+| **4 — Full surface + containment** (Q3) | All hooks; kill switch tested end-to-end including credential revocation propagation | Tabletop exercise passed; blast-radius caps live |
+| **5 — Procurement leverage** (ongoing) | ACS hook exposure becomes a vendor requirement | Contract language; no un-instrumented agent platforms approved |
+
+Phase 1 is non-negotiable and the most commonly skipped. Enforcing policy on an uncalibrated threshold generates false denials, which destroys organizational trust in the control plane — and a control plane the business has learned to route around is worse than none.
+
+---
+
+## 🧠 Key Takeaways
+
+1. **System prompts are not controls; they're requests.** The entire argument for ACS is that enforcement must live outside the thing being governed. Once that lands, "we told the model not to" stops sounding like a control and starts sounding like the risk it is.
+
+2. **Two hooks cover six of ten risks.** Tool call and memory store. This is the highest-leverage finding in the mapping, and it converts an intimidating ten-risk framework into a tractable first quarter.
+
+3. **The policy file is the audit artifact.** Declarative, version-controlled, diffable. A regulator asking for evidence of human oversight gets an executable rule with `fail_mode: deny`, not a paragraph of intent. This is a materially stronger compliance posture and it costs nothing extra.
+
+4. **Provenance is upstream of enforcement.** ACS can act on a provenance tag but cannot invent one. Organizations will discover their retrieval layer has no notion of trusted vs. untrusted content — and that turns an agent security project into a data governance project, which is the correct realisation to have early.
+
+5. **Make hooks a procurement requirement now.** Tier 1 adoption is the binding constraint. Governance leaders have a narrow window to make ACS hook exposure a buying criterion before proprietary guardrails harden into lock-in. That is a purchasing-power lever, and it is available today.
+
+---
+
+## 🛠️ Tools Used
+
+- Claude (control mapping, policy authoring, gap analysis)
+- OWASP Agent Control Standard (ACS) v0.1 — Instrument / Trace / Inspect specs
+- OWASP Top 10 for Agentic Applications 2026 (ASI01–ASI10)
+- OpenTelemetry semantic conventions; OCSF
+- CycloneDX / SPDX / SWID (AgBOM)
+- ISO/IEC 42001:2023, NIST AI RMF 1.0, EU AI Act (Art. 9, 12, 14)
+
+---
+
+## 📚 Resources Referenced
+
+- [Agent Control Standard (ACS) — OWASP GenAI Security Project](https://genai.owasp.org/resource/agent-control-standard-acs/)
+- [ACS project site](https://agentcontrolstandard.org/)
+- [ACS specification repository](https://github.com/GenAI-Security-Project/agent-control-standard)
+- [OWASP Top 10 for Agentic Applications 2026](https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/)
+- [GenAI Security Industry Framework Crosswalk](https://genai.owasp.org/resource/genai-security-industry-framework-crosswalk/)
+- [OWASP GenAI Security Project — 2026 announcement](https://genai.owasp.org/2026/09/01/owasp-genai-security-project-unveils-2026-top-10-for-llm-applications-new-agent-control-standard-and-sponsors-as-community-tops-30000-members/)
+- [OpenTelemetry](https://opentelemetry.io/)
+
+---
+
+## 🔗 Connect
+
+- LinkedIn: [Vivek DP](https://www.linkedin.com/in/vivekdp/)
+- GitHub: [vkktask/60-day-claude-challeng](https://github.com/vkktask/60-day-claude-challeng)
+
+---
+
+*Part of the VP AI Governance Roadmap | ABTalks 60-Day Claude Challenge — Day 54 of 60*
