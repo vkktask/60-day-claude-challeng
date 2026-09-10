@@ -1,0 +1,331 @@
+# Day 55 — AI Governance Maturity Model: 8 Domains × 5 Levels
+
+**Challenge:** ABTalks 60-Day Claude AI Challenge
+**Author:** [Vivek DP](https://www.linkedin.com/in/vivekdp/)
+**Date:** Day 55 of 60
+**Track:** AI Governance / Responsible AI — VP Roadmap
+**Arc:** [Day 53 — Threat Model](../Day53) → [Day 54 — Runtime Enforcement](../Day54) → **Day 55 — Program Maturity**
+
+---
+
+## 🎯 Day 55 Objective
+
+Days 53 and 54 went deep on one system. This one zooms out to the **program**: a maturity model a CISO, CDO, or AI governance lead can run as a two-hour workshop and walk out with a scored baseline, a defensible target state, and a sequenced roadmap.
+
+Built to be **assessable, not aspirational** — every level descriptor is written as an observable condition, not an adjective. If two assessors can't independently land on the same score, the rubric has failed.
+
+---
+
+## 📉 The Problem This Model Solves
+
+The 2026 data says the gap isn't funding or intent. It's operationalisation:
+
+| Signal | Figure | Source |
+|--------|--------|--------|
+| Organisations with funding allocated to AI governance | **90%** | [Schellman, 525 US professionals](https://www.schellman.com/blog/news/new-schellman-ai-research-report) |
+| Believe they'd pass an AI compliance audit today | **74%** | Schellman |
+| Describe their governance program as fully mature | **27%** | Schellman |
+| Executives claiming an AI governance framework exists | **87%** | Industry survey data |
+| Have actually operationalised enterprise AI governance | **<25%** | Industry survey data |
+| Adopted ISO/IEC 42001 | **36%** | Stanford HAI |
+| Adopted NIST AI RMF | **33%** | Stanford HAI |
+| Plan to adopt agentic AI within two years | **74%** | [Deloitte](https://www.deloitte.com/us/en/services/consulting/articles/iso-42001-standard-ai-governance-risk-management.html) |
+| Have a mature governance model for AI **agents** | **21%** | Deloitte |
+| Fortune 500 procurement teams planning to require ISO 42001 of vendors by 2027 | **83%** | Gartner, 2026 |
+
+**Read the two most important rows together: 74% believe they'd pass an audit; 27% are actually mature.** That ~47-point delta is not dishonesty — it's the absence of a rubric. People assess themselves against their intentions. A maturity model's real job is to make the self-assessment falsifiable.
+
+**And the agentic row is the one that should worry a board:** 74% adopting, 21% governed. Days 53–54 exist because that gap is where the next class of incidents comes from.
+
+---
+
+## 🧭 The Five Levels
+
+| Level | Name | Defining test | Audit posture |
+|-------|------|---------------|---------------|
+| **L1** | **Ad hoc** | AI is being built. Nobody can produce a list of it | Would fail on scope alone |
+| **L2** | **Reactive** | Policy exists on paper. Compliance depends on individuals remembering | Fails on evidence |
+| **L3** | **Defined** | Process is documented, owned, and consistently followed. Evidence is retrievable on request | Passes a first audit |
+| **L4** | **Managed** | Controls are measured, enforced automatically, and exceptions are tracked with data | Passes with metrics |
+| **L5** | **Adaptive** | The program tunes itself from telemetry and adversarial testing; governance is a control loop, not a checkpoint | Sets the benchmark |
+
+**The L2→L3 jump is where most programs stall**, and the reason is consistent: L2 rewards writing documents, L3 requires producing evidence. The transition costs organisational discipline, not budget — which is exactly why 90% funded and 27% mature can both be true.
+
+**The L3→L4 jump is where automation becomes mandatory.** Manual governance does not scale past a few dozen AI systems, and it does not work at all for agents that act in milliseconds.
+
+---
+
+## 🏛️ The Eight Domains
+
+```
+   GOVERN                    BUILD                     RUN
+┌─────────────┐      ┌──────────────────┐      ┌──────────────────┐
+│ D1 Strategy │      │ D3 Risk &        │      │ D6 Runtime       │
+│  Policy &   │      │    Impact        │      │    Controls &    │
+│  Account-   │      │    Assessment    │      │    Monitoring    │
+│  ability    │      ├──────────────────┤      ├──────────────────┤
+├─────────────┤      │ D4 Data          │      │ D7 Third-Party   │
+│ D2 Inventory│      │    Governance    │      │    & Supply      │
+│  & Risk     │      │    for AI        │      │    Chain         │
+│  Classifi-  │      ├──────────────────┤      ├──────────────────┤
+│  cation     │      │ D5 Lifecycle     │      │ D8 Incident,     │
+│             │      │    Assurance &   │      │    Assurance &   │
+│             │      │    Testing       │      │    Improvement   │
+└─────────────┘      └──────────────────┘      └──────────────────┘
+```
+
+---
+
+## 📊 The Rubric
+
+### D1 — Strategy, Policy & Accountability
+
+| L | Observable condition |
+|---|----------------------|
+| 1 | No AI policy. AI decisions made per-team, per-project |
+| 2 | AI policy published. No named owner; no enforcement mechanism; policy not referenced in any gate |
+| 3 | Board-approved AI policy with responsible-AI principles. A **named individual** (not a committee) is accountable. Governance forum meets on a defined cadence with decision rights |
+| 4 | Policy compliance is measured; exceptions require documented risk acceptance with expiry dates; governance KPIs reported to the board quarterly |
+| 5 | Policy is versioned against regulatory and threat-landscape change; risk appetite is quantified and drives investment allocation |
+
+*ISO 42001: Cl. 5.1–5.3, A.2, A.3 · NIST AI RMF: GOVERN 1.1–1.4, 2.1*
+
+---
+
+### D2 — AI Inventory & Risk Classification
+
+| L | Observable condition |
+|---|----------------------|
+| 1 | No inventory. Shadow AI unknown and unmeasured |
+| 2 | Partial inventory, manually maintained, stale within a quarter. Classification informal |
+| 3 | Complete inventory of AI systems including embedded vendor AI. Documented risk-tiering methodology applied consistently. Each entry has an owner |
+| 4 | Inventory is **discovery-driven**, not self-declared — populated by automated detection across cloud, SaaS, and endpoints. Reconciled continuously; drift alerts fire |
+| 5 | Inventory extends to dynamic composition (agents, tools, MCP servers, models) via AgBOM; changes post-approval trigger automatic re-review |
+
+*ISO 42001: A.4, A.5 · NIST AI RMF: MAP 1.1–1.6 · EU AI Act: Art. 6, Annex III classification*
+
+> **Assessment tip:** ask for the inventory before the workshop. The gap between what arrives and what people describe in the room is your most honest signal for the whole assessment.
+
+---
+
+### D3 — Risk & Impact Assessment
+
+| L | Observable condition |
+|---|----------------------|
+| 1 | No AI-specific risk assessment. Security review only, if any |
+| 2 | Ad hoc assessment for high-profile projects. Format varies by reviewer |
+| 3 | Mandatory AI impact assessment before deployment, covering bias, explainability, safety, privacy, and rights impacts. Standard template; sign-off required to ship |
+| 4 | Assessments are risk-tiered (depth scales with tier), tracked to closure with SLAs, and reassessed on material change. Threat modelling required for agentic systems |
+| 5 | Quantified risk (likelihood × impact, expressed in business terms); assessment outputs feed control selection automatically; post-deployment outcomes validate or correct the original assessment |
+
+*ISO 42001: Cl. 6.1.2 (AI system impact assessment), Cl. 8.2 · NIST AI RMF: MAP 3, 5; MEASURE 2 · EU AI Act: Art. 9 (risk management), Art. 27 (FRIA)*
+
+---
+
+### D4 — Data Governance for AI
+
+| L | Observable condition |
+|---|----------------------|
+| 1 | Training and retrieval data used without provenance, consent basis, or classification |
+| 2 | Data classification exists for the enterprise but is not applied to AI pipelines specifically |
+| 3 | Documented lineage for training and RAG data: source, licence, consent basis, classification, retention. Bias and quality checks performed and recorded |
+| 4 | Automated enforcement — pipelines reject unclassified or out-of-policy data; bias metrics tracked per release; drift monitored against a baseline |
+| 5 | **Provenance is a first-class runtime attribute**: every span entering a model context carries a trust tag, enabling enforcement (see Day 54, ASI01/ASI06) |
+
+*ISO 42001: A.7 (data for AI systems) · NIST AI RMF: MAP 2.3, MEASURE 2.8 · EU AI Act: Art. 10*
+
+> L5 here is the quiet dependency for everything in Day 54. A control plane can only act on provenance if the data layer produces it. Most organisations discover their agent security project is actually a data governance project — and the earlier that lands, the cheaper it is.
+
+---
+
+### D5 — Lifecycle Assurance & Testing
+
+| L | Observable condition |
+|---|----------------------|
+| 1 | Ship when it demos well. No pre-release AI-specific testing |
+| 2 | Functional evals only. No adversarial testing. No documented acceptance criteria |
+| 3 | Defined gates across the lifecycle with pass/fail criteria: evals, safety testing, red-team exercise for high-risk systems, documented model cards |
+| 4 | Automated eval suites in CI; regression thresholds block release; red teaming is scheduled and scoped by risk tier; findings tracked with owners and due dates |
+| 5 | Continuous adversarial testing in production-like conditions; replay/digital-twin validation before any policy or capability expansion; assurance evidence generated as a build artifact |
+
+*ISO 42001: A.6.2.2–A.6.2.5, Cl. 9.1 · NIST AI RMF: MEASURE 1–4 · EU AI Act: Art. 15 (accuracy, robustness), Art. 17 (QMS)*
+
+---
+
+### D6 — Runtime Controls & Monitoring
+
+| L | Observable condition |
+|---|----------------------|
+| 1 | No runtime controls. Prompt instructions treated as controls |
+| 2 | Basic input/output filtering. No logging sufficient for reconstruction |
+| 3 | Enforced guardrails at defined control points; human oversight required for high-impact actions; logs capture decision, input, output, identity |
+| 4 | **Declarative, version-controlled policy enforced at runtime** with allow/deny/modify verdicts; behavioural baselines with drift alerting; blast-radius caps and tested kill switches |
+| 5 | Policy is portable across platforms (ACS-style hook architecture); enforcement telemetry feeds detection engineering; intent-deviation monitoring live |
+
+*ISO 42001: A.6.2.6, A.9, Cl. 9.1 · NIST AI RMF: MANAGE 2.2, 4.1 · EU AI Act: Art. 14 (human oversight), Art. 12 (logging)*
+
+> This is the domain [Day 54](../Day54) implements end to end. **L4 in D6 is not reachable without ACS-style hooks or an equivalent** — manual oversight cannot gate an agent acting in milliseconds. This is the single clearest instance in the model where maturity has a hard architectural prerequisite.
+
+---
+
+### D7 — Third-Party & Supply Chain
+
+| L | Observable condition |
+|---|----------------------|
+| 1 | Vendor AI adopted with no AI-specific diligence |
+| 2 | Standard vendor security questionnaire only; no AI-specific questions |
+| 3 | AI-specific vendor assessment: model provenance, training data claims, subprocessors, retention, evaluation evidence. Contract terms cover AI use |
+| 4 | AIBOM maintained for material dependencies; components pinned and signature-verified; continuous vendor monitoring; ISO 42001 alignment required in procurement |
+| 5 | Supply chain transparency is dynamic — runtime discovery of new tools/MCP servers/models triggers governance review before use |
+
+*ISO 42001: A.10 (third parties and suppliers) · NIST AI RMF: MAP 4.1, GOVERN 6.1 · EU AI Act: Art. 25 (value chain) · ISO 27001: A.5.19–5.21*
+
+> **83% of Fortune 500 procurement teams plan to require ISO 42001 alignment from vendors by 2027.** For anyone selling into the enterprise, D7 maturity flips from a cost centre to a revenue prerequisite inside eighteen months.
+
+---
+
+### D8 — Incident Response, Assurance & Continuous Improvement
+
+| L | Observable condition |
+|---|----------------------|
+| 1 | No AI incident definition. AI failures handled as ordinary bugs |
+| 2 | AI incidents routed to the general IR process, which has no AI-specific playbook or severity criteria |
+| 3 | AI incident taxonomy and runbooks exist (bias incident, model failure, injection, data leakage); severity criteria defined; regulatory notification paths mapped |
+| 4 | Runbooks tested via tabletop; MTTD/MTTR measured for AI incidents; post-incident findings drive control changes with tracked closure; internal audit covers AI controls |
+| 5 | Agent-specific scenarios covered (rogue agent, memory poisoning, cascading failure) with automated containment; external assurance obtained; lessons feed the risk model and re-tier systems automatically |
+
+*ISO 42001: Cl. 9.2–9.3, Cl. 10 · NIST AI RMF: MANAGE 4.1–4.3 · EU AI Act: Art. 73 (serious incident reporting), Art. 72 (post-market monitoring)*
+
+---
+
+## 🧮 Scoring & Interpretation
+
+### Scoring method
+
+Score each domain 1–5 at the **lowest fully-met level** — partial credit is where maturity models go to die. If any L3 condition in a domain is unmet, the domain is L2. Half-points are not permitted.
+
+| Domain | Weight | Score (1–5) | Weighted | Evidence reference |
+|--------|--------|-------------|----------|--------------------|
+| D1 Strategy, Policy & Accountability | 1.0 | | | |
+| D2 Inventory & Risk Classification | **1.5** | | | |
+| D3 Risk & Impact Assessment | 1.25 | | | |
+| D4 Data Governance for AI | 1.25 | | | |
+| D5 Lifecycle Assurance & Testing | 1.0 | | | |
+| D6 Runtime Controls & Monitoring | **1.5** | | | |
+| D7 Third-Party & Supply Chain | 1.0 | | | |
+| D8 Incident & Continuous Improvement | 1.0 | | | |
+| **Program score** | **9.5** | | **/47.5** | |
+
+**Why D2 and D6 are weighted 1.5:** D2 because every other domain's coverage is bounded by inventory completeness — you cannot govern what you cannot enumerate, so a low D2 caps the real value of a high score anywhere else. D6 because it is the only domain that acts *while* harm is occurring; everything else is before or after.
+
+### Interpretation bands
+
+| Weighted | Band | What it means |
+|----------|------|---------------|
+| < 19 | **Exposed** | Governance is nominal. Shadow AI is the dominant risk. Stop new high-risk deployments until D2 reaches L3 |
+| 19–28 | **Documented** | The 74%-think-they'd-pass zone. Policy exists; evidence does not. First real audit will find gaps |
+| 29–38 | **Operating** | Genuinely functioning program. Audit-defensible. Automation is the next constraint |
+| 39–44 | **Measured** | Data-driven governance. Ready to govern agentic systems at scale |
+| 45–47.5 | **Adaptive** | Benchmark-setting. Governance operates as a control loop |
+
+### Hard gates (non-negotiable regardless of total score)
+
+A high average must never mask a disqualifying gap. These override the band:
+
+- **No high-risk AI deployment** unless D2, D3, and D6 are each ≥ L3
+- **No agentic deployment with tool access** unless D6 ≥ L4 *and* D2 covers dynamic composition
+- **No third-party AI in a regulated process** unless D7 ≥ L3
+- **No production AI at all** without a named accountable individual (D1 ≥ L3)
+
+---
+
+## 🤖 The Agentic Overlay
+
+74% adopting agents, 21% with mature agent governance. That gap is not evenly distributed across the eight domains — it concentrates in three, and the required uplift is specific:
+
+| Domain | Traditional AI L3 is enough? | What agents additionally demand |
+|--------|------------------------------|--------------------------------|
+| **D2 Inventory** | No | Static inventory misses runtime tool/MCP discovery. Needs AgBOM with change events |
+| **D3 Risk Assessment** | No | Needs threat modelling of trust boundaries, not a questionnaire ([Day 53](../Day53)) |
+| **D6 Runtime Controls** | **No — L4 required** | Human-in-the-loop cannot gate millisecond actions. Needs hook-based enforcement with allow/deny/modify ([Day 54](../Day54)) |
+| D4 Data Governance | Partly | Provenance must become a runtime attribute, not a catalogue entry |
+| D8 Incident Response | Partly | Needs agent-specific scenarios and automated containment |
+
+**Practical implication for a governance lead:** you cannot get to mature agent governance by scaling the AI governance program you already have. D6 has an architectural prerequisite, and D2 needs a different data model. Budget for both explicitly, or the 21% figure will describe you too.
+
+---
+
+## 🇪🇺 Regulatory Timing Note (as of September 2026)
+
+Worth stating precisely, because the dates moved and a lot of roadmaps are anchored to the old ones:
+
+- The **Digital Omnibus** package, given final Council approval on 29 June 2026, pushed stand-alone **Annex III high-risk obligations from 2 August 2026 to 2 December 2027**, and **Annex I product-embedded systems to 2 August 2028**.
+- The stated reason was **standards readiness, not a change of substance** — the harmonised standards that would confer presumption of conformity weren't ready. The requirements are unchanged; only the date they bite moved.
+- **Article 50 transparency duties stand on their original dates.**
+
+**The governance read:** this is roughly fifteen extra months, and the honest way to use it is D2 and D4 — inventory completeness and data lineage — because those are the long-lead items that cannot be compressed at the end. Treating the delay as fifteen months of deferral rather than fifteen months of runway is the predictable mistake, and the harmonised standards arriving mid-window will make late starts considerably more expensive.
+
+*Not legal advice — confirm applicability and dates with counsel for your specific systems and markets.*
+
+---
+
+## 🗓️ Workshop Format (2 hours)
+
+| Time | Activity | Output |
+|------|----------|--------|
+| Pre-work | Request the AI inventory and one completed impact assessment | Reality check before anyone speaks |
+| 0:00–0:10 | Frame: the 74%/27% gap. Name the goal as calibration, not grading | Psychological safety to score honestly |
+| 0:10–1:10 | Score D1–D8. **Evidence or it didn't happen** — for each claimed level, ask "show me" | Scored baseline with evidence references |
+| 1:10–1:25 | Apply hard gates | List of deployments that should pause |
+| 1:25–1:45 | Set target state per domain for 12 months (not all L5 — L5 is rarely the right target outside D2/D6) | Defensible target profile |
+| 1:45–2:00 | Sequence: pick the two lowest-scoring weighted domains as Q1 focus | Roadmap with named owners |
+
+**The one rule that makes this work:** no level is claimed without evidence anyone in the room can point to. Every maturity assessment that skips this produces a score 1.5 levels too generous, which is precisely the 47-point delta in the data above.
+
+---
+
+## 🧠 Key Takeaways
+
+1. **The maturity gap is a measurement gap.** 74% think they'd pass an audit; 27% are mature. People score themselves against intentions. A rubric written as observable conditions, assessed with "show me," is the cheapest governance intervention available — it costs one workshop and immediately reprices the roadmap.
+
+2. **L2→L3 is a discipline problem, not a budget problem.** 90% have funding. The blocker is that L2 rewards producing documents and L3 requires producing evidence. Knowing this changes what you ask the board for: not more money, but the authority to gate.
+
+3. **D6 maturity has an architectural prerequisite.** Every other domain can improve through process. Runtime control at L4 cannot — manual oversight physically cannot gate an agent acting in milliseconds. This is why [Day 54](../Day54) is a dependency of Day 55, not an appendix to it.
+
+4. **Weight inventory heavily or the score lies.** Coverage of every other domain is bounded by D2 completeness. A program scoring L4 across the board on the 60% of AI it knows about is not an L4 program.
+
+5. **Fifteen months of runway is being read as fifteen months of deferral.** The Digital Omnibus delay was about standards readiness, not softened substance. Spend it on D2 and D4 — the long-lead domains — because those are the ones that cannot be compressed when the harmonised standards land.
+
+---
+
+## 🛠️ Tools Used
+
+- Claude (rubric construction, weighting logic, crosswalk)
+- ISO/IEC 42001:2023 · ISO/IEC 27001:2022
+- NIST AI RMF 1.0 (GOVERN / MAP / MEASURE / MANAGE)
+- EU AI Act incl. Digital Omnibus amendments (June 2026)
+- OWASP Top 10 for Agentic Applications 2026 · Agent Control Standard (agentic overlay)
+
+---
+
+## 📚 Resources Referenced
+
+- [Schellman — Enterprises Aren't AI Audit-Ready (2026 research)](https://www.schellman.com/blog/news/new-schellman-ai-research-report)
+- [Deloitte — ISO 42001 for AI Governance and Risk Management](https://www.deloitte.com/us/en/services/consulting/articles/iso-42001-standard-ai-governance-risk-management.html)
+- [CSA — EU AI Act high-risk deadline pushed to December 2027](https://labs.cloudsecurityalliance.org/research/csa-research-note-owasp-genai-top10-2026-agent-control-stand/)
+- [Travers Smith — EU agrees to delay key AI Act compliance deadlines](https://www.traverssmith.com/knowledge/knowledge-container/eu-agrees-to-delay-key-ai-act-compliance-deadlines/)
+- [Trilateral Research — EU AI Act implementation timeline by risk tier](https://trilateralresearch.com/responsible-ai/eu-ai-act-implementation-timeline-mapping-your-models-to-the-new-risk-tiers)
+- [Schellman — AI Governance & ISO 42001 FAQs, 2026](https://www.schellman.com/blog/ai-governance/ai-governance-and-iso-42001-faqs)
+- [ISO/IEC 42001:2023](https://www.iso.org/standard/81230.html)
+- [NIST AI Resource Center](https://airc.nist.gov/)
+
+---
+
+## 🔗 Connect
+
+- LinkedIn: [Vivek DP](https://www.linkedin.com/in/vivekdp/)
+- GitHub: [vkktask/60-day-claude-challeng](https://github.com/vkktask/60-day-claude-challeng)
+
+---
+
+*Part of the VP AI Governance Roadmap | ABTalks 60-Day Claude Challenge — Day 55 of 60*
