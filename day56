@@ -1,0 +1,380 @@
+# Day 56 — Agentic AI Incident Response Playbook
+
+**Challenge:** ABTalks 60-Day Claude AI Challenge
+**Author:** [Vivek DP](https://www.linkedin.com/in/vivekdp/)
+**Date:** Day 56 of 60
+**Track:** AI Governance / Responsible AI — VP Roadmap
+**Arc:** [Day 53 Threat Model](../Day53) → [Day 54 Runtime Enforcement](../Day54) → [Day 55 Maturity Model](../Day55) → **Day 56 Incident Response**
+
+---
+
+## 🎯 Day 56 Objective
+
+Day 53 modelled the threats. Day 54 enforced against them. Day 55 measured the program — and flagged **D8 (Incident Response)** as the domain where agent-specific scenarios are almost universally missing.
+
+This is D8, built out: **four runbooks for incidents that have no analogue in a traditional IR plan**, with detection logic that runs against Day 54's telemetry fields, a containment ladder priced by reversibility, and the regulatory clocks that start whether or not anyone has noticed.
+
+Written for a security team that already has an IR function and needs the agentic delta — not an IR primer.
+
+---
+
+## ⚡ 1. Why Agentic IR Breaks the Standard Playbook
+
+Five structural differences. Each one invalidates a step most IR plans depend on.
+
+| # | Standard IR assumption | Agentic reality | Consequence |
+|---|------------------------|-----------------|-------------|
+| 1 | **Compromise = unauthorised access** | Every action used valid credentials and permitted operations | Access logs show nothing anomalous. Detection must key on *intent deviation*, not authorisation |
+| 2 | **Containment = isolate the host** | The agent's harmful capability is its *granted scope*, spread across SaaS APIs and peer agents | Isolating compute doesn't revoke authority. Containment is an identity and policy action |
+| 3 | **Eradication = remove the artefact** | The attacker's instruction may now be a *belief* in persistent memory | There is no file to delete. Eradication means memory forensics and selective rollback |
+| 4 | **Blast radius grows at human speed** | Fan-out is machine-speed and multi-hop across an agent mesh | Response time budget is minutes, not hours. Manual triage arrives after the damage |
+| 5 | **Root cause is in your estate** | Trigger may be a sentence inside a third party's document, read six weeks ago | Root cause analysis requires provenance lineage you either captured or didn't |
+
+> **The load-bearing consequence:** if you cannot reconstruct *which input span caused which tool call*, you cannot close an agentic incident — you can only stop it. Every runbook below depends on the telemetry from [Day 54 §5](../Day54). Without it, your best case is containment without eradication, which means recurrence.
+
+---
+
+## 🚨 2. Severity Taxonomy
+
+Standard sev scales key on data volume and system criticality. Agentic severity must also key on **autonomy** and **reversibility** — an agent with write access and no human gate is a fundamentally different incident from a read-only copilot.
+
+| Sev | Criteria (any one) | Response | Exec notification |
+|-----|--------------------|----------|-------------------|
+| **AI-SEV1** | Agent took irreversible action on production/financial/customer systems · confirmed exfiltration via agent tooling · rogue behaviour with live credentials · cascade affecting >1 business service | Immediate fleet-level containment. War room. | CISO + GC immediately; board within 24h |
+| **AI-SEV2** | Confirmed goal hijack with tool execution · memory poisoning in a shared/multi-tenant store · privilege escalation via delegation chain · cascade contained to one service | Agent-level containment within 30 min. IR lead assigned. | CISO within 1h |
+| **AI-SEV3** | Injection attempt reached the context window but policy denied the action · single-tenant memory poisoning · anomalous tool chain, no confirmed impact | Investigate within 4h. Policy tuning. | Weekly governance forum |
+| **AI-SEV4** | Guardrail fired as designed · drift within tolerance · near-miss with no action attempted | Log, trend, feed detection engineering | Monthly metrics |
+
+**Two escalation rules that matter:**
+
+- **Autonomy multiplier** — any incident on an agent with write scope *and* no human-in-the-loop gate escalates one level automatically. The absence of a gate is itself an aggravating factor.
+- **Multi-tenant memory rule** — poisoning of a memory store shared across tenants or business units is never below SEV2, regardless of apparent impact, because dwell time is unbounded until proven otherwise.
+
+---
+
+## 🔍 3. Detection Layer
+
+Detections written against the ACS/OTel span attributes specified in [Day 54 §5](../Day54). Pseudo-query form — port to your SIEM's dialect.
+
+### DET-1 — Goal drift (ASI01)
+
+```sql
+-- Plan diverged from the signed task manifest beyond tolerance
+SELECT agent.id, task.manifest_hash, plan.divergence, trace.id
+FROM acs_spans
+WHERE hook = 'plan_transition'
+  AND plan.divergence > 0.30
+  AND verdict != 'deny'          -- fired but was NOT blocked = live exposure
+```
+**Tune on baseline, not intuition.** Day 55's Phase-1 observe-mode data is what sets this threshold; shipping 0.30 untuned generates false positives that teach the org to ignore the alert.
+
+### DET-2 — Untrusted span originated a tool call (ASI01 → ASI02)
+
+```sql
+-- The single highest-fidelity agentic detection available
+SELECT t.agent.id, t.tool.id, i.span.provenance, t.trace.id
+FROM acs_spans t
+JOIN acs_spans i ON t.trace.id = i.trace.id
+WHERE t.hook = 'tool_call'
+  AND i.hook = 'input'
+  AND i.span.provenance = 'untrusted'
+  AND i.span.id IN (t.causal_ancestry)
+```
+Near-zero false positive rate when provenance tagging is real. If this returns rows, indirect injection is working.
+
+### DET-3 — Delegation chain expansion (ASI03)
+
+```sql
+SELECT agent.id, delegation.chain, delegation.depth, credential.ttl
+FROM acs_spans
+WHERE hook = 'sub_agent_invoke'
+  AND (delegation.depth > 2 OR credential.reused = true)
+```
+
+### DET-4 — Low-provenance write to trusted memory (ASI06)
+
+```sql
+SELECT agent.id, write.source, write.provenance_score, write.target_segment
+FROM acs_spans
+WHERE hook = 'memory_store'
+  AND write.target_segment = 'trusted'
+  AND (write.provenance_score < 0.70 OR write.source = 'agent_output')
+```
+
+### DET-5 — Blast radius / cascade precursor (ASI08)
+
+```sql
+-- Fan-out velocity, not volume: the shape of a cascade before it is one
+SELECT agent.id, COUNT(*) AS actions,
+       COUNT(DISTINCT tool.id) AS distinct_tools,
+       COUNT(DISTINCT delegation.callee) AS peers
+FROM acs_spans
+WHERE hook IN ('tool_call','sub_agent_invoke')
+  AND ts > NOW() - INTERVAL '5 minutes'
+GROUP BY agent.id
+HAVING COUNT(*) > 50 OR COUNT(DISTINCT delegation.callee) > 3
+```
+
+### DET-6 — Behavioural manifest violation (ASI10)
+
+```sql
+SELECT agent.id, behaviour.baseline_delta, watchdog.score
+FROM acs_spans
+WHERE behaviour.manifest_violation = true
+   OR behaviour.baseline_delta > 3 * stddev_baseline
+```
+
+**Coverage note:** DET-2 and DET-4 together catch the injection→persistence path, which is the backbone of the Day 53 kill chain. If you deploy two detections, deploy those.
+
+---
+
+## 🛑 4. Containment Ladder
+
+Containment choices have wildly different reversibility costs. Escalate deliberately — and know in advance who can authorise each rung, because a 3am debate about authority *is* the outage.
+
+| Rung | Action | Stops | Business cost | Authority |
+|------|--------|-------|---------------|-----------|
+| **C0** | Observe + raise trace sampling to 100% | Nothing | None | On-call analyst |
+| **C1** | Policy flip to `deny` on the implicated tool/hook | That action class | Low — agent degrades gracefully | On-call analyst |
+| **C2** | Force human step-up on all write operations | Autonomous harm | Medium — throughput drops, approval load rises | IR lead |
+| **C3** | Revoke the agent's credentials; freeze its identity | This agent entirely | Medium-high — workflow stops | IR lead |
+| **C4** | Quarantine the memory segment (read-only, halt recall) | Poisoned belief propagation | High — agents lose context, quality drops | IR lead + service owner |
+| **C5** | Fleet kill switch; revoke across all agents sharing the compromised component | Everything, including the unknown | Severe — business process halts | CISO |
+
+**Three rules that prevent the common mistakes:**
+
+1. **C1 before C3 when the trigger is a single tool.** Killing the agent destroys the live evidence and the attacker's foothold *remains in memory*. You will contain and then recur.
+2. **C4 is mandatory for confirmed poisoning**, however expensive. Leaving a poisoned store live while you investigate means every recall is a re-exploit.
+3. **C5 requires a pre-agreed trigger**, decided in a tabletop, not in the incident. "Same unsigned MCP server present in ≥3 agents" is a trigger. "It feels bad" is not.
+
+**Test the ladder cold.** A kill switch that has never been exercised is a documented assumption. Day 55 puts tested containment at D8/L4 for exactly this reason.
+
+---
+
+## 📕 5. The Four Runbooks
+
+### RB-1 — Rogue Agent (ASI10)
+
+*Agent operating outside authorised scope: compromised, misaligned, reward-hacking, or persisting past task end.*
+
+**Triggers:** DET-6 · DET-1 sustained · agent acting after task closure · watchdog anomaly · human report of "the agent did something strange"
+
+**First 15 minutes**
+1. **C0** — sampling to 100%. Capture before you break anything.
+2. Snapshot: current goal state, active plan, tool inventory, credential set, delegation chain, memory segments touched in 24h.
+3. Determine **autonomy posture**: does it hold write scope? Is any human gate active? → sets severity.
+4. **C3** — revoke credentials. Do *not* delete the agent; you need it for reconstruction.
+5. Enumerate peers it invoked in 24h → each is a containment candidate (assume transitive compromise until disproven).
+
+**Investigation**
+- Diff observed behaviour against the signed behavioural manifest — what specifically deviated, and when did it start?
+- Walk backwards to the **first** deviating span. This is the pivot: goal hijack (external trigger) vs. misalignment (internal drift)? Different root cause, different fix.
+- Reconstruct every action since first deviation. Classify: reversible / irreversible / exfiltrative.
+- Check memory writes since deviation — did it persist instructions for its successor? (→ RB-2)
+
+**Eradication**
+- Revoke and reissue identity with narrowed scope.
+- Roll back reversible actions; log irreversible ones for the impact assessment and notification decision.
+- If goal hijack: locate the injection source, then run RB-4.
+- If misalignment: this is a model/objective problem, not a security one — route to the AI team with the behavioural evidence. Re-running the same objective on a fresh agent reproduces the incident.
+
+**Recovery gate** — do not restore until: manifest violation explained · injection source closed or RB-4 complete · memory verified clean · behavioural baseline re-established under observation · narrowed scope live.
+
+---
+
+### RB-2 — Memory & Context Poisoning (ASI06)
+
+*The hardest agentic incident, because the artefact is a belief and dwell time is usually unknown.*
+
+**Triggers:** DET-4 · agents citing facts with no valid source · consistent wrong-direction reasoning across sessions · a RAG source later found compromised
+
+**First 15 minutes**
+1. **C4 — quarantine the segment immediately.** Read-only, recall halted. This is the one runbook where containment precedes investigation: every recall while you deliberate is another exploitation.
+2. Scope the segment: which tenants, users, agents, tasks can read it?
+3. Identify all agents that recalled from it in the retention window → each inherits suspicion.
+4. **Multi-tenant reach → SEV2 minimum**, automatically.
+
+**Investigation — the dwell-time problem**
+- Trace poisoned entries to their write event: source, provenance score, timestamp, writing agent.
+- **Establish dwell time.** This is the question the incident turns on and the one most organisations cannot answer. Without write-time provenance (Day 55 D4/L5), you are guessing — and guessing wide, because the honest answer becomes "the full retention window."
+- Map propagation: did poisoned content get re-ingested as agent output into other stores? (`write.source = agent_output` → downstream contamination)
+- Reconstruct decisions influenced by the poisoned belief. **This is the customer-impact and notification set**, and it is usually larger than expected.
+
+**Eradication**
+- Selective rollback to the last clean snapshot for the segment — full wipe only if provenance is unrecoverable.
+- Purge downstream re-ingested copies. Incomplete purge = reinfection on next recall.
+- Close the write path: raise the provenance floor, enforce TTL, block `agent_output → trusted` (Day 54 `P-MEM-01/02/03`).
+- Re-index from verified sources.
+
+**Recovery gate** — segment restored from verified state · write-path policy enforced and tested · no re-ingestion path remains · affected decisions reviewed for customer/regulatory impact · dwell-time conclusion documented with its confidence level.
+
+> **The uncomfortable truth to surface to leadership:** without write-time provenance you cannot bound dwell time, so you cannot bound impact, so you cannot scope notification. The cheap control (provenance scoring at the memory hook) is what makes this incident closeable. Fund it before you need it.
+
+---
+
+### RB-3 — Cascading Failure (ASI08)
+
+*A fault amplifying across the agent mesh. Often no attacker at all — and simultaneously a security incident and an availability incident.*
+
+**Triggers:** DET-5 · error-rate spike with action-volume spike · circuit breaker trips · loop detection · multiple agents producing the same wrong output
+
+**First 15 minutes**
+1. **C2 — force step-up on all writes across the affected workflow.** Fastest way to arrest machine-speed fan-out without destroying state.
+2. Identify **patient zero**: earliest anomalous span in the lineage graph.
+3. Classify the fault: poisoned input (→ RB-2/RB-4) · hallucination amplified by delegation · misconfigured tool · legitimate load.
+4. If fan-out is still rising → **C5**. A rising cascade outruns investigation; this is the one rung you escalate early.
+
+**Investigation**
+- Build the propagation graph: which agent passed what to whom, in what order.
+- Quantify amplification factor (actions per originating fault) — this is your blast-radius cap calibration data.
+- Identify why isolation failed: shared credentials? Missing breaker? Unbounded delegation depth? Absent rate limit?
+- Distinguish *amplification* (same error repeated) from *mutation* (error compounding into new errors). Mutation is materially worse and implies planning-layer contamination.
+
+**Eradication & hardening**
+- Reverse erroneous actions in dependency order — parents before children, or you re-trigger.
+- Install the missing control: blast-radius cap, circuit breaker, task-scoped one-time credentials, delegation depth limit.
+- Validate the fix by replay in an isolated twin of production before restoring autonomy.
+
+**Recovery gate** — patient zero fixed · amplification path broken by an enforced control · replay test passes within blast-radius caps · breakers tuned to observed amplification factor.
+
+---
+
+### RB-4 — Indirect Injection → Data Exfiltration (ASI01 + ASI02)
+
+*The Day 53 kill chain, executed. Every step authorised; egress via an approved tool.*
+
+**Triggers:** DET-2 · volume/entropy anomaly on an approved tool · outbound to a recipient not in the task context · tool chain never seen in baseline
+
+**First 15 minutes**
+1. **C1 — deny the egress tool for the agent class**, not just the agent. If one agent is affected, the payload is likely reachable by peers.
+2. Identify the exfiltration channel and **quantify what left**: records, classification, destination.
+3. Assess: personal data? Regulated data? Cross-border? → starts the notification clocks in §7 **now**, not after root cause.
+4. Preserve the full trace: input spans, provenance tags, plan, tool args, responses.
+
+**Investigation**
+- **Find the payload.** Walk causal ancestry from the tool call back to the originating input span. The `span.provenance` field is the whole investigation — with it this is minutes; without it, it is an unbounded document review.
+- Identify the carrier: document, email, ticket, calendar invite, web page, API response.
+- **Scope exposure by carrier, not by agent.** The right question is "which other agents ingested this same artefact?" — often a much larger set.
+- Check whether the injected instruction was written to memory (→ RB-2). Injection plus persistence is a different, worse incident.
+- Confirm the egress destination: attacker-controlled, or a legitimate recipient receiving the wrong data?
+
+**Eradication**
+- Remove or neutralise the carrier artefact at source; notify its owner if third-party.
+- Enforce provenance gating: untrusted spans cannot originate tool calls (Day 54 `P-GOAL-02`). **This is the control that closes the class**, not just the instance.
+- Constrain the egress tool: recipient allowlists, volume caps, destination validation.
+- Rotate anything that transited the channel.
+
+**Recovery gate** — carrier removed and peer exposure enumerated · provenance gating enforced and tested with the original payload · egress constrained · notification decision documented with counsel · no memory persistence remaining.
+
+---
+
+## 🔬 6. Forensic Reconstruction Requirements
+
+To close any agentic incident you must be able to answer six questions. Each maps to a Day 54 telemetry field — capture them before the incident or you will be reconstructing from vibes.
+
+| Question | Required field(s) | If missing |
+|----------|-------------------|------------|
+| What was the agent *asked* to do? | `task.manifest_hash` | Cannot prove drift occurred at all |
+| What did it *decide* to do? | `plan.divergence`, plan snapshot | Cannot distinguish hijack from misalignment |
+| **What caused that decision?** | `span.provenance`, causal ancestry | **Cannot find root cause. Incident closes as "unknown"** |
+| What did it actually do? | `tool.id`, `args_hash`, `verdict`, `policy.id` | Cannot scope impact |
+| Who else was involved? | `delegation.chain`, peer identities | Cannot bound lateral spread |
+| What does it now believe? | memory write log w/ provenance + TTL | **Cannot eradicate. Guaranteed recurrence** |
+
+**Two rows are marked because they are the two that fail in practice.** Provenance and memory-write lineage are the fields teams skip as "nice to have" — and they are precisely the two whose absence converts a closeable incident into an open-ended one. Budget them as forensic requirements, not observability polish.
+
+**Preservation order** (before any containment above C1): trace spans → memory snapshot → credential state → AgBOM at time of incident → tool response payloads. C3 and above destroy live state; snapshot first.
+
+---
+
+## ⏱️ 7. Regulatory Notification Clocks
+
+The clocks start on *awareness*, not on root cause. Several will expire before your investigation concludes — which is why every regime below permits an initial partial report, and why "we'll notify once we understand it" is the most common compliance failure in AI incidents.
+
+| Regime | Trigger | Clock | Notes |
+|--------|---------|-------|-------|
+| **EU AI Act Art. 73** | Serious incident involving a high-risk AI system | **15 days** general · **10 days** if a death may have been caused · **2 days** for widespread infringement or serious/irreversible disruption of critical infrastructure | Art. 73(5) expressly allows an **initial incomplete report** with supplementary detail to follow. Commission draft guidance issued Oct 2025 |
+| **GDPR Art. 33** | Personal data breach | **72 hours** to the supervisory authority | Art. 34 adds notification to data subjects where high risk to rights and freedoms |
+| **NIS2** | Significant incident, in-scope entities | **24h** early warning · **72h** assessment · **1 month** final | Runs in parallel with, not instead of, the above |
+| **Sectoral** (DORA, HIPAA, SEC, state laws) | Varies | Varies | Map yours in advance — per-incident research is not a plan |
+
+**Timing caveat as of September 2026:** Art. 73 sits within the high-risk regime, and the **Digital Omnibus** (Council approval 29 June 2026) moved stand-alone Annex III high-risk obligations to **2 December 2027** (Annex I product-embedded to 2 August 2028), on standards-readiness rather than substantive grounds. Sources published before mid-2026 still cite August 2026 — check the vintage of anything you're relying on. **Confirm applicability, trigger definitions, and dates with counsel for your specific systems and markets; this is not legal advice.**
+
+**Operational implication:** build the notification decision into the runbook at the 15-minute mark (see RB-4 step 3), not at the retrospective. Pre-draft the partial-report template with the fields each regime requires, and pre-agree who signs it.
+
+---
+
+## 🎲 8. Tabletop Scenarios
+
+Day 55 puts *tested* runbooks at D8/L4. Four scenarios, each designed to break a different assumption:
+
+| # | Scenario | Assumption it breaks | Success = |
+|---|----------|---------------------|-----------|
+| **TT-1** | A vendor PDF ingested six weeks ago contained hidden instructions. The finance agent has been quietly CC'ing an external address since. | "We'd notice" | Team finds the carrier from trace data in <30 min and correctly enumerates *peer* exposure by artefact |
+| **TT-2** | A shared RAG index serving four business units contains fabricated policy guidance. Unknown write date. | "We can scope it" | Team quarantines before investigating, and reaches an honest dwell-time conclusion with stated confidence — not a convenient one |
+| **TT-3** | One hallucinated record triggers 400 downstream updates across three agents in eleven minutes. | "We can respond in time" | Team reaches C2 within 10 min and reverses in correct dependency order |
+| **TT-4** | An agent continues acting three days after its task closed, using still-valid credentials. Nobody owns it. | "Someone owns every agent" | Team discovers there is no named owner — and files that as the finding |
+
+**TT-4 is the one to run first.** It usually fails on inventory (Day 55 D2), not on response capability, and that finding reprices the whole program more honestly than any tabletop about a clever attack.
+
+---
+
+## ⚠️ 9. Honest Limits
+
+| Limit | Why | Mitigation |
+|-------|-----|------------|
+| **Detections assume ACS-grade telemetry** | Un-instrumented platforms emit none of these fields | Gateway-layer logging as a stopgap; make hook exposure a procurement requirement |
+| **Dwell time may be unknowable** | No write-time provenance = no lower bound on poisoning | Assume full retention window; notify accordingly. Fix the write path first |
+| **Drift thresholds are org-specific** | 0.30 is a placeholder, not a recommendation | Calibrate on Phase-1 observe-mode data (Day 55 roadmap) |
+| **Irreversible actions stay irreversible** | No runbook un-sends a wire transfer | Response quality is bounded by prevention quality — C2 gates are worth more than any runbook here |
+| **Misalignment isn't a security incident** | RB-1 may terminate in "the objective was wrong" | Route to the AI team with behavioural evidence; security cannot fix an objective function |
+| **Multi-org agent meshes** | A2A across organisational boundaries has no shared IR protocol | Contractual incident cooperation terms; treat external agents as untrusted peers |
+
+---
+
+## 🧠 Key Takeaways
+
+1. **Containment without eradication is the default agentic failure.** The attacker's instruction survives in memory after you've killed the agent. Traditional IR has no analogue for "remove the belief," which is why RB-2 is the hardest runbook and why memory-write lineage is a forensic requirement rather than an observability nicety.
+
+2. **One field decides whether an incident is closeable.** `span.provenance` turns root cause analysis from an unbounded document review into a minutes-long query. It is cheap to add and impossible to add retroactively — the strongest argument for instrumenting before you need it.
+
+3. **Quarantine before you investigate — only in RB-2.** Every other runbook preserves evidence first. Poisoning is the exception because each recall during deliberation is a fresh exploitation, and that inversion is the kind of thing teams get wrong live unless it's written down.
+
+4. **The notification clock starts on awareness, not understanding.** 72 hours under GDPR and as little as 2 days under AI Act Art. 73 will expire before root cause in most agentic incidents. Both regimes permit partial reports — pre-draft them. This is a governance win available for the cost of a template.
+
+5. **Run the boring tabletop first.** TT-4 — an agent still running after its task ended, with no owner — fails on inventory rather than response skill, and that is the more valuable finding. Sophisticated attack scenarios flatter the IR team; ownership gaps reprice the program.
+
+---
+
+## 🛠️ Tools Used
+
+- Claude (runbook construction, detection logic, clock mapping)
+- OWASP Top 10 for Agentic Applications 2026 (ASI01–ASI10)
+- OWASP Agent Control Standard — telemetry field basis for all detections
+- NIST SP 800-61 (IR lifecycle, adapted) · NIST AI RMF (MANAGE 4)
+- ISO/IEC 42001:2023 Cl. 9.2–10 · ISO/IEC 27035
+- EU AI Act Art. 72–73 incl. Digital Omnibus amendments · GDPR Art. 33–34 · NIS2
+
+---
+
+## 📚 Resources Referenced
+
+- [Article 73: Reporting of Serious Incidents — EU AI Act](https://artificialintelligenceact.eu/article/73/)
+- [European Commission draft guidance on serious AI incident reporting — Latham & Watkins](https://www.lw.com/en/insights/european-commission-publishes-draft-guidance-reporting-serious-ai-incidents)
+- [Draft guidance on serious incident reporting — Jones Walker](https://www.joneswalker.com/en/insights/blogs/ai-law-blog/european-commission-issues-draft-guidance-issued-on-serious-incident-reporting-un.html)
+- [EU AI Act Art. 73 full text](https://www.euaiact.com/article/73)
+- [Travers Smith — EU agrees to delay key AI Act compliance deadlines](https://www.traverssmith.com/knowledge/knowledge-container/eu-agrees-to-delay-key-ai-act-compliance-deadlines/)
+- [OWASP Top 10 for Agentic Applications 2026](https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/)
+- [Agent Control Standard (ACS)](https://genai.owasp.org/resource/agent-control-standard-acs/)
+- [NIST AI Resource Center](https://airc.nist.gov/)
+
+---
+
+## 🔗 Connect
+
+- LinkedIn: [Vivek DP](https://www.linkedin.com/in/vivekdp/)
+- GitHub: [vkktask/60-day-claude-challeng](https://github.com/vkktask/60-day-claude-challeng)
+
+---
+
+*Part of the VP AI Governance Roadmap | ABTalks 60-Day Claude Challenge — Day 56 of 60*
