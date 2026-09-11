@@ -1,0 +1,107 @@
+# Day 58 — Board Briefing: Governing Agentic AI
+
+**Challenge:** ABTalks 60-Day Claude AI Challenge
+**Author:** [Vivek DP](https://www.linkedin.com/in/vivekdp/)
+**Date:** Day 58 of 60
+**Track:** AI Governance / Responsible AI — VP Roadmap
+**Arc:** [Day 53 Threat Model](../Day53) → [Day 54 Runtime Enforcement](../Day54) → [Day 55 Maturity Model](../Day55) → [Day 56 Incident Response](../Day56) → [Day 57 Assessment Tool](../Day57) → **Day 58 Board Briefing**
+
+📊 **Deliverable:** [`Governing_Agentic_AI_Board_Briefing.pptx`](./Governing_Agentic_AI_Board_Briefing.pptx) — 14 slides, speaker notes on every slide
+
+---
+
+## 🎯 Day 58 Objective
+
+Days 53–57 produced five technical artefacts. None of them is presentable to a board — they are practitioner documents, and their depth is exactly what makes them unusable in a forty-minute governance slot.
+
+This is the translation layer: **the whole stack compressed into fourteen slides a CISO or board audit committee would actually sit through**, structured as a decision document rather than an education document.
+
+The test it was built against: a non-technical director should be able to follow why agentic AI is a different risk class, understand what it costs to address, and vote on four specific decisions — without needing any of the underlying material.
+
+---
+
+## 📑 Slide Flow
+
+| # | Slide | Job it does |
+|---|-------|-------------|
+| 1 | Title | Frames the asymmetry: systems act, controls haven't caught up |
+| 2 | **Executive summary + the ask** | Three things to know, four decisions to make — lead with the ask, not the education |
+| 3 | What changed | Generative vs agentic, side by side |
+| 4 | The exposure | 74% adopting / 21% governed, plus the 74%/27% self-assessment delta |
+| 5 | Why existing controls don't fire | Three structural reasons — justifies new investment rather than more of the same |
+| 6 | Anatomy of a breach | Six moves, every step authorised |
+| 7 | **Where to spend first** | 6 of 10 risks at two control points — the fundable insight |
+| 8 | Target architecture | Control plane outside the agent; allow / deny / modify |
+| 9 | Where we stand | Maturity bars + two failed hard gates |
+| 10 | Incident reality | Containment ≠ eradication; notification clocks |
+| 11 | Regulatory runway | Dec 2027, and how to spend fifteen months |
+| 12 | **Four decisions** | Each with cost of yes *and* cost of no |
+| 13 | Twelve-month sequence | Five phases, with the commonly-skipped one called out |
+| 14 | The one sentence | Closes on the asymmetry |
+
+**Design:** navy/amber palette, Cambria headers with Calibri body, numbered-circle motif carried throughout, dark slides bookending light content. Validated clean; every slide visually inspected.
+
+---
+
+## 🗣️ Three Choices Worth Copying
+
+**The ask goes on slide 2, not slide 13.** Board decks that build to a request lose the room's attention before arriving. Leading with four decisions means every subsequent slide is read as evidence for a choice already on the table — which is also how directors prefer to work.
+
+**Every decision carries a cost of no.** Slide 12 prices both sides of each of the four asks. A request with only a cost of yes reads as a budget bid; a request with both reads as a risk decision the board is already making by default. "We cannot scope any incident, or any audit" is a more effective argument for inventory funding than any amount of framework citation.
+
+**Slide 9 is designed to embarrass the score.** The maturity bars look middling and unremarkable. The red panel beside them says two hard gates failed. That deliberate contradiction is the point — a respectable average concealing a disqualifying gap is the single most common governance failure, and the slide makes it visible rather than averaged away.
+
+---
+
+## ⚠️ Before You Present This
+
+**Slide 9 carries illustrative scores.** Replace them with real output from the [Day 57 workbook](../Day57) before this goes in front of anyone. The slide is marked as illustrative in its footnote, but the footnote is not a substitute for doing the assessment.
+
+**The four decisions need local costing.** "One FTE-quarter plus tooling" is a plausible placeholder, not your number. A board will ask, and an unsourced figure undermines the rest.
+
+**Regulatory dates need counsel sign-off.** Slides 10 and 11 cite EU AI Act Art. 73 tiers and the Digital Omnibus timeline, both footnoted as requiring confirmation. Applicability depends on your systems and markets.
+
+**Cut to fit the slot.** Fourteen slides is roughly 35–40 minutes with discussion. For a twenty-minute slot, present 2, 4, 7, 9, 12 — the summary, the exposure, where to spend, where we stand, and the decisions. Everything else is supporting evidence.
+
+---
+
+## 🧠 Key Takeaways
+
+1. **The translation is a separate deliverable, not a summary.** Five technical documents do not compress into a board deck by shortening them. The board artefact answers a different question — not "how does agentic risk work" but "what are you asking me to decide" — and that requires rebuilding from the decision backwards.
+
+2. **Cost of no is the most underused device in governance communication.** Every risk request has one, and stating it converts a funding ask into a decision the board is already making implicitly. This is the single highest-leverage edit available to most security presentations.
+
+3. **Good news slides fund programs.** Slide 7 — two control points cover six of ten risks — does more for the budget than any of the threat material. Practitioners instinctively lead with severity; boards fund tractability.
+
+4. **Design for the contradiction you want noticed.** Slide 9's middling bars beside a red "2 hard gates failed" panel is the deck's most useful moment, and it works precisely because the two halves disagree. A chart that merely confirms the headline is decoration.
+
+---
+
+## 🛠️ Tools Used
+
+- Claude (narrative structure, slide design, speaker notes)
+- pptxgenjs (generation); LibreOffice + validation tooling (QA)
+- Source material: Days 53–57 of this challenge
+- OWASP Top 10 for Agentic Applications 2026 · OWASP Agent Control Standard
+- ISO/IEC 42001:2023 · NIST AI RMF 1.0 · EU AI Act (incl. Digital Omnibus, June 2026)
+
+---
+
+## 📚 Data Sources Cited in the Deck
+
+- [Deloitte — agentic AI adoption and governance maturity](https://www.deloitte.com/us/en/services/consulting/articles/iso-42001-standard-ai-governance-risk-management.html) (74% adopting, 21% mature)
+- [Schellman — 2026 AI readiness research, n=525](https://www.schellman.com/blog/news/new-schellman-ai-research-report) (74% audit confidence, 27% mature)
+- [OWASP Top 10 for Agentic Applications 2026](https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/)
+- [OWASP Agent Control Standard](https://genai.owasp.org/resource/agent-control-standard-acs/)
+- [EU AI Act Art. 73](https://artificialintelligenceact.eu/article/73/) · [Digital Omnibus deadline changes](https://www.traverssmith.com/knowledge/knowledge-container/eu-agrees-to-delay-key-ai-act-compliance-deadlines/)
+
+---
+
+## 🔗 Connect
+
+- LinkedIn: [Vivek DP](https://www.linkedin.com/in/vivekdp/)
+- GitHub: [vkktask/60-day-claude-challeng](https://github.com/vkktask/60-day-claude-challeng)
+
+---
+
+*Part of the VP AI Governance Roadmap | ABTalks 60-Day Claude Challenge — Day 58 of 60*
