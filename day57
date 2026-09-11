@@ -1,0 +1,124 @@
+# Day 57 — AI Governance Maturity Assessment (Workshop Tool)
+
+**Challenge:** ABTalks 60-Day Claude AI Challenge
+**Author:** [Vivek DP](https://www.linkedin.com/in/vivekdp/)
+**Date:** Day 57 of 60
+**Track:** AI Governance / Responsible AI — VP Roadmap
+**Arc:** [Day 53 Threat Model](../Day53) → [Day 54 Runtime Enforcement](../Day54) → [Day 55 Maturity Model](../Day55) → [Day 56 Incident Response](../Day56) → **Day 57 Assessment Tool**
+
+📊 **Deliverable:** [`AI_Governance_Maturity_Assessment.xlsx`](./AI_Governance_Maturity_Assessment.xlsx)
+
+---
+
+## 🎯 Day 57 Objective
+
+Day 55 defined the maturity model. A rubric in a README doesn't get used in a boardroom — so this is the same model built as a **working instrument**: five tabs, live weighted scoring, automated band classification, hard-gate logic that overrides the score, and a radar comparison of current versus target state.
+
+Built for one specific moment: a governance lead has two hours, eight stakeholders, and needs to walk out with a scored baseline nobody can dispute and a sequenced Q1 focus.
+
+---
+
+## 📑 What's in the Workbook
+
+| Tab | Purpose |
+|-----|---------|
+| **Instructions** | Purpose, the 74%/27% framing, how to run it, scoring rules, cell legend, and a fully worked example (mid-sized financial services firm, 18 months in) |
+| **Assessment** | The scoring grid. 8 domains × weight × current score × target score, with live weighted calculation, gap column, evidence reference and assessor notes |
+| **Rubric** | All 40 level descriptors (8 domains × L1–L5) as observable conditions, plus ISO 42001 / NIST AI RMF / EU AI Act references per domain |
+| **Results** | Program score out of 47.50, percent of maximum, maturity band with interpretation, target gap, four hard gates with PASS/FAIL, and a radar chart of current vs target |
+| **Roadmap** | Domains auto-ranked by weighted gap to target, with owner / first action / due date fields to fill in |
+
+**Mechanics:** yellow cells with blue bold text are inputs; grey cells are calculated. Score cells are constrained to whole numbers 1–5 by data validation — **a half-point entry is rejected with an error message**, which enforces the "no partial credit" rule at the cell level rather than by asking nicely. The 1.5× weights on D2 and D6 carry cell comments explaining why. 87 formulas, verified with zero errors.
+
+---
+
+## 🧮 How the Scoring Works
+
+```
+Weighted domain score  =  weight × score (1–5)
+Program score          =  Σ weighted        (maximum 47.50)
+Band                   =  INDEX/MATCH against the band floor table
+Hard gates             =  MIN() across the specific domains each gate requires
+Roadmap priority       =  RANK() of weighted gap to target, descending
+```
+
+**Weights:** D2 Inventory and D6 Runtime Controls at 1.5×; D3 Risk Assessment and D4 Data Governance at 1.25×; the rest at 1.0×. Total weight 9.5, maximum score 47.50.
+
+**Band floors:** <19 Exposed · 19–28 Documented · 29–38 Operating · 39–44 Measured · 45+ Adaptive.
+
+### The hard gates are the part that matters
+
+A weighted average is a comfortable number, and comfort is the failure mode this whole model exists to attack. So four gates sit outside the score and override it:
+
+| Gate | Requires |
+|------|----------|
+| Any production AI | D1 ≥ 3 — a **named accountable individual**, not a committee |
+| High-risk AI deployment | D2, D3, D6 each ≥ 3 |
+| **Agentic AI with tool access** | **D6 ≥ 4 and D2 ≥ 4** |
+| Third-party AI in a regulated process | D7 ≥ 3 |
+
+The worked example scores 22.25 — a middling "Documented" — and **fails two gates**. That is the designed behaviour: a respectable-looking total concealing a disqualifying gap in exactly the places that produce incidents. If the tool only ever produced a number, it would be worse than no tool.
+
+The agentic gate is the strictest in the workbook, and deliberately so. L3 is *Defined* — guardrails exist, humans approve high-impact actions. That is insufficient for an agent acting in milliseconds, which is the argument [Day 54](../Day54) makes at length and [Day 56](../Day56) then shows the incident consequences of.
+
+---
+
+## 🗓️ Running It as a Workshop
+
+| Time | Activity | Output |
+|------|----------|--------|
+| Pre-work | Request the AI inventory and one completed impact assessment | Reality check before anyone speaks |
+| 0:00–0:10 | Frame the 74%/27% gap. Name the goal as calibration, not grading | Permission to score honestly |
+| 0:10–1:10 | Score D1–D8 on the Assessment tab. **Evidence or it didn't happen** | Scored baseline with evidence references |
+| 1:10–1:25 | Read the Results tab; work the failed gates first | List of deployments that should pause |
+| 1:25–1:45 | Set 12-month targets per domain | Defensible target profile |
+| 1:45–2:00 | Read the Roadmap tab's top two by weighted gap | Q1 focus with named owners |
+
+**Two facilitation notes earned the hard way in the model's design:**
+
+The pre-work request does more diagnostic work than the first hour of discussion. The gap between the inventory that arrives and the inventory people describe in the room is your most honest signal, and you get it for free.
+
+And don't let the room target L5 everywhere. Outside D2 and D6, L4 is usually the right twelve-month ceiling — L5 implies a self-tuning control loop that most programs cannot staff, and an unreachable target is indistinguishable from no target.
+
+---
+
+## 🧠 Key Takeaways
+
+1. **Constraints beat instructions.** "No half-points" written in a README is advice; data validation that rejects 2.5 with an error is a control. The same distinction runs through this entire arc — it's why [Day 54](../Day54) argues system prompts aren't controls, and it applies just as much to a spreadsheet as to an agent.
+
+2. **Design the tool to embarrass the score.** A weighted average is comfortable, and comfortable metrics are how 74% of organisations came to believe they'd pass an audit. The hard gates exist so a middling total can still read *stop shipping* — and the worked example is built to demonstrate exactly that, rather than to flatter.
+
+3. **Weighting is an argument, not arithmetic.** D2 and D6 at 1.5× encode a claim: you cannot govern what you cannot enumerate, and only one domain acts while harm is occurring. Anyone who disagrees should change the weights — the cell comments make the reasoning contestable, which is the point.
+
+4. **The instrument is the adoption strategy.** Day 55's rubric was correct and unused. The delta between a model and a tool someone actually runs on a Tuesday afternoon is formatting, formulas, and a worked example — which is a much smaller amount of work than building the model, and roughly all of the value.
+
+---
+
+## 🛠️ Tools Used
+
+- Claude (workbook architecture, formula logic, rubric condensation)
+- openpyxl (build); LibreOffice (formula verification — 87 formulas, 0 errors)
+- Source model: [Day 55 — AI Governance Maturity Model](../Day55)
+- ISO/IEC 42001:2023 · NIST AI RMF 1.0 · EU AI Act · ISO/IEC 27001:2022
+
+---
+
+## 📚 Benchmark Sources
+
+Figures cited on the Instructions tab and in [Day 55](../Day55):
+
+- [Schellman — Enterprises Aren't AI Audit-Ready (2026, 525 US professionals)](https://www.schellman.com/blog/news/new-schellman-ai-research-report)
+- [Deloitte — ISO 42001 for AI Governance and Risk Management](https://www.deloitte.com/us/en/services/consulting/articles/iso-42001-standard-ai-governance-risk-management.html)
+- Stanford HAI — framework adoption data (ISO 42001 36%, NIST AI RMF 33%)
+- Gartner 2026 — Fortune 500 procurement survey (83% to require ISO 42001 of vendors by 2027)
+
+---
+
+## 🔗 Connect
+
+- LinkedIn: [Vivek DP](https://www.linkedin.com/in/vivekdp/)
+- GitHub: [vkktask/60-day-claude-challeng](https://github.com/vkktask/60-day-claude-challeng)
+
+---
+
+*Part of the VP AI Governance Roadmap | ABTalks 60-Day Claude Challenge — Day 57 of 60*
